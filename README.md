@@ -93,13 +93,22 @@ npm install
 
 ## 💻 開發模式（npm run dev）
 
-開發時用這個指令，會同時啟動 Vite dev server 與 Electron，並支援前端熱更新：
+開發時用這個指令，會**同時**啟動 Vite dev server 與 Electron，並支援前端熱更新：
 
 ```bash
 npm run dev
 ```
 
-> 這會啟動 `http://localhost:5173`（Vite）並開啟 Electron 視窗載入它。
+它會：
+1. 啟動 Vite（綁定 `127.0.0.1:5173`，**不會自動打開瀏覽器**）。
+2. 等 Vite 起來後（`wait-on`）以 `NODE_ENV=development` 啟動 **Electron**。
+3. Electron 視窗載入 `http://localhost:5173`；打包後（production）則改載入 `dist/index.html`。
+
+> ⚠️ **`http://localhost:5173` 只是 Electron 內部開發用的網址，不是給瀏覽器用的。**
+> 請使用自動跳出的 **Electron 桌面視窗** 操作，不要用 Edge / Chrome 開這個網址 —
+> 在一般瀏覽器裡開會看到「無法連接 Electron 主程序」，因為瀏覽器沒有 Electron 的
+> preload bridge（`window.api`），自然無法呼叫系統功能。
+>
 > 開發模式下會直接讀寫 `config/user-settings.json`。
 
 ---

@@ -9,8 +9,12 @@ export default defineConfig({
   base: './',
   root: '.',
   server: {
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
+    // Never auto-open a browser: the dev UI is meant to run INSIDE the Electron
+    // window (which provides window.api via preload), not in Edge/Chrome.
+    open: false,
   },
   build: {
     outDir: 'dist',

@@ -6,9 +6,9 @@
   "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
-    "dev": "concurrently -k -n VITE,ELECTRON -c cyan,green \"npm:dev:vite\" \"npm:dev:electron\"",
-    "dev:vite": "vite",
-    "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
+    "dev": "concurrently -k -n VITE,ELECTRON -c cyan,green \"vite --host 127.0.0.1\" \"wait-on tcp:127.0.0.1:5173 && cross-env NODE_ENV=development electron .\"",
+    "dev:vite": "vite --host 127.0.0.1",
+    "dev:electron": "wait-on tcp:127.0.0.1:5173 && cross-env NODE_ENV=development electron .",
     "build": "vite build",
     "preview": "vite preview",
     "gen:icons": "node scripts/generate-icons.js",
