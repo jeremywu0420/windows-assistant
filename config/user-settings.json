@@ -2,7 +2,8 @@
   "general": {
     "downloadsPath": "D:\\我的資料庫\\Downloads",
     "monitorDrives": ["C:\\", "D:\\"],
-    "screenshotsPath": "D:\\我的資料庫\\Pictures\\Screenshots"
+    "screenshotsPath": "D:\\我的資料庫\\Pictures\\Screenshots",
+    "vscodePath": "C:\\Users\\Jeremy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
   },
   "screenshots": {
     "path": "D:\\我的資料庫\\Pictures\\Screenshots",
@@ -18,7 +19,7 @@
     {
       "name": "寫程式模式",
       "apps": [
-        "C:\\Users\\User\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+        "C:\\Users\\Jeremy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
       ],
       "folders": [
         "D:\\我的資料庫\\Desktop\\windows assistant\\windows-assistant"

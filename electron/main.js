@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, globalShortcut } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, globalShortcut, dialog } = require('electron');
 
 const settingsService = require('./services/settingsService');
 const systemMonitorService = require('./services/systemMonitorService');
@@ -223,6 +223,31 @@ function registerIpc() {
     try {
       await shell.openPath(res.path);
       return { ok: true, path: res.path };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
+
+  // --- VS Code detection / file picker ---
+  ipcMain.handle('vscode:detect', async () => {
+    const config = loadConfig();
+    return modeService.detectVSCode(config.general && config.general.vscodePath);
+  });
+
+  ipcMain.handle('dialog:pickVSCode', async () => {
+    try {
+      const result = await dialog.showOpenDialog(mainWindow, {
+        title: '選擇 VS Code 執行檔 (Code.exe)',
+        properties: ['openFile'],
+        filters: [
+          { name: 'VS Code', extensions: ['exe', 'cmd'] },
+          { name: '所有檔案', extensions: ['*'] },
+        ],
+      });
+      if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+        return { ok: false, canceled: true };
+      }
+      return { ok: true, path: result.filePaths[0] };
     } catch (err) {
       return { ok: false, error: err.message };
     }

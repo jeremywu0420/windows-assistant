@@ -42,6 +42,10 @@ contextBridge.exposeInMainWorld('api', {
   saveSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
   openSettingsFile: () => ipcRenderer.invoke('settings:openFile'),
 
+  // VS Code path
+  detectVSCode: () => ipcRenderer.invoke('vscode:detect'),
+  pickVSCodeFile: () => ipcRenderer.invoke('dialog:pickVSCode'),
+
   // Misc
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),
   minimizeToTray: () => ipcRenderer.invoke('app:minimizeToTray'),
