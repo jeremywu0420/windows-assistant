@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const { spawn } = require('child_process');
-const { shell } = require('electron');
+const { shell, app } = require('electron');
 
 /**
  * Quick Mode launcher service.
@@ -11,6 +11,21 @@ const { shell } = require('electron');
  * shell commands. Every step is independent — one failure never stops the rest,
  * and a bad/missing path produces a friendly error instead of crashing.
  */
+
+// The app's own Vite dev server. Opening it in an external browser just shows
+// the UI without the Electron preload bridge ("無法連接 Electron 主程序"), so in
+// development we skip it instead of launching Edge/Chrome.
+const DEV_SERVER_HOSTS = new Set(['localhost', '127.0.0.1']);
+const DEV_SERVER_PORT = '5173';
+
+function isOwnDevServerUrl(url) {
+  try {
+    const u = new URL(url);
+    return DEV_SERVER_HOSTS.has(u.hostname) && u.port === DEV_SERVER_PORT;
+  } catch (_) {
+    return false;
+  }
+}
 
 function listModes(config) {
   const modes = config && Array.isArray(config.modes) ? config.modes : [];
@@ -65,6 +80,16 @@ async function openFolder(folderPath, steps) {
 }
 
 async function openUrl(url, steps) {
+  // In development, never open the app's own dev server in an external browser.
+  if (!app.isPackaged && isOwnDevServerUrl(url)) {
+    steps.push({
+      type: 'url',
+      target: url,
+      status: 'skipped',
+      message: '已略過：這是 App 自己的開發網址 (localhost:5173)，請用 Electron 視窗操作，不需在瀏覽器開啟',
+    });
+    return;
+  }
   try {
     await shell.openExternal(url);
     steps.push({ type: 'url', target: url, status: 'ok', message: '已在瀏覽器開啟' });

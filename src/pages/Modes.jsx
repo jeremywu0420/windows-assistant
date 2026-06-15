@@ -91,8 +91,8 @@ export default function Modes({ externalResult }) {
                       <span className="tag">{STEP_LABEL[s.type] || s.type}</span>
                     </td>
                     <td className="path">{s.target}</td>
-                    <td className={s.status === 'ok' ? 'status-ok' : 'status-error'}>
-                      {s.status === 'ok' ? '✅ OK' : '❌ 失敗'}
+                    <td className={s.status === 'ok' ? 'status-ok' : s.status === 'skipped' ? 'muted' : 'status-error'}>
+                      {s.status === 'ok' ? '✅ OK' : s.status === 'skipped' ? '⏭️ 略過' : '❌ 失敗'}
                     </td>
                     <td className="muted">{s.message}</td>
                   </tr>
