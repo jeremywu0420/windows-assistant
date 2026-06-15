@@ -21,7 +21,7 @@
         "C:\\Users\\User\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
       ],
       "folders": [
-        "D:\\Projects\\codex"
+        "D:\\我的資料庫\\Desktop\\windows assistant\\windows-assistant"
       ],
       "urls": [
         "http://localhost:5173",
@@ -29,7 +29,7 @@
       ],
       "commands": [
         {
-          "cwd": "D:\\Projects\\codex",
+         "cwd": "D:\\我的資料庫\\Desktop\\windows assistant\\windows-assistant",
           "command": "npm run dev"
         }
       ]
@@ -37,8 +37,8 @@
   ],
   "projects": [
     {
-      "name": "codex",
-      "path": "D:\\Projects\\codex",
+      "name": "windows-assistant",
+      "path": "D:\\我的資料庫\\Desktop\\windows assistant\\windows-assistant",
       "gitReminderHours": 2,
       "backupReminderHours": 24
     }
