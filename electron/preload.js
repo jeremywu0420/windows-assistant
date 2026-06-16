@@ -14,10 +14,24 @@ contextBridge.exposeInMainWorld('api', {
   listModes: () => ipcRenderer.invoke('mode:list'),
   runMode: (modeName) => ipcRenderer.invoke('mode:run', modeName),
 
-  // File organizer
+  // Downloads / file organizer
   scanDownloads: () => ipcRenderer.invoke('files:scan'),
   organizeFiles: (items) => ipcRenderer.invoke('files:organize', items),
   detectDownloads: () => ipcRenderer.invoke('downloads:detect'),
+  undoOrganize: () => ipcRenderer.invoke('downloads:undo'),
+  openDownloadsFolder: () => ipcRenderer.invoke('downloads:openFolder'),
+
+  // Monitoring
+  getMonitorState: () => ipcRenderer.invoke('monitor:getState'),
+  setMonitorPaused: (value) => ipcRenderer.invoke('monitor:setPaused', value),
+  restartMonitor: () => ipcRenderer.invoke('monitor:restart'),
+
+  // Automations
+  listAutomations: () => ipcRenderer.invoke('automations:list'),
+  saveAutomations: (automations) => ipcRenderer.invoke('automations:save', automations),
+
+  // Notifications
+  testNotification: () => ipcRenderer.invoke('notifications:test'),
 
   // Git
   checkGit: () => ipcRenderer.invoke('git:check'),
@@ -42,6 +56,10 @@ contextBridge.exposeInMainWorld('api', {
   getSettings: () => ipcRenderer.invoke('settings:get'),
   saveSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
   openSettingsFile: () => ipcRenderer.invoke('settings:openFile'),
+  exportSettings: () => ipcRenderer.invoke('settings:export'),
+  importSettings: () => ipcRenderer.invoke('settings:import'),
+  resetSettings: () => ipcRenderer.invoke('settings:reset'),
+  openLogs: () => ipcRenderer.invoke('logs:open'),
 
   // VS Code path
   detectVSCode: () => ipcRenderer.invoke('vscode:detect'),
@@ -75,5 +93,15 @@ contextBridge.exposeInMainWorld('api', {
     const handler = () => callback();
     ipcRenderer.on('app:open-command-palette', handler);
     return () => ipcRenderer.removeListener('app:open-command-palette', handler);
+  },
+  onFileEvent: (callback) => {
+    const handler = (_event, info) => callback(info);
+    ipcRenderer.on('app:file-event', handler);
+    return () => ipcRenderer.removeListener('app:file-event', handler);
+  },
+  onMonitoringChanged: (callback) => {
+    const handler = (_event, info) => callback(info);
+    ipcRenderer.on('app:monitoring-changed', handler);
+    return () => ipcRenderer.removeListener('app:monitoring-changed', handler);
   },
 });

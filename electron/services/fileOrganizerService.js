@@ -16,12 +16,13 @@ const { execFile } = require('child_process');
  */
 
 const CATEGORY_RULES = [
-  { category: 'PDF', exts: ['.pdf'] },
-  { category: 'Documents', exts: ['.doc', '.docx', '.txt', '.md', '.rtf', '.odt'] },
-  { category: 'Presentations', exts: ['.ppt', '.pptx'] },
-  { category: 'Images', exts: ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'] },
-  { category: 'Compressed', exts: ['.zip', '.rar', '.7z', '.tar', '.gz'] },
-  { category: 'Code', exts: ['.cpp', '.c', '.h', '.hpp', '.js', '.jsx', '.ts', '.tsx', '.v', '.py', '.java', '.cs', '.go', '.rs'] },
+  { category: 'Images', exts: ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'] },
+  { category: 'Documents', exts: ['.pdf', '.doc', '.docx', '.txt', '.md', '.xlsx', '.pptx', '.ppt', '.rtf', '.odt'] },
+  { category: 'Archives', exts: ['.zip', '.rar', '.7z', '.tar', '.gz'] },
+  { category: 'Installers', exts: ['.exe', '.msi'] },
+  { category: 'Videos', exts: ['.mp4', '.mov', '.avi', '.mkv'] },
+  { category: 'Audio', exts: ['.mp3', '.wav', '.flac'] },
+  { category: 'Code', exts: ['.js', '.jsx', '.ts', '.tsx', '.json', '.html', '.css', '.py', '.cpp', '.h', '.c', '.v'] },
 ];
 
 const OTHERS_CATEGORY = 'Others';

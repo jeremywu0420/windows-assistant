@@ -1,0 +1,62 @@
+/* Design tokens — Fluent-inspired. Theme is switched via [data-theme] on <html>. */
+
+:root,
+:root[data-theme='dark'] {
+  --bg: #0f1115;
+  --bg-elevated: #171a21;
+  --bg-card: #171a21;
+  --surface-hover: #1f2430;
+  --border: #2a2f3a;
+  --text: #f4f7fb;
+  --text-dim: #9aa4b2;
+  --accent: #4f8cff;
+  --accent-strong: #4f8cff;
+  --accent-contrast: #ffffff;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+
+  --input-bg: #0b1220;
+  --input-text: #e6edf6;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.28);
+  --overlay: rgba(2, 6, 23, 0.6);
+
+  --sidebar-w: 232px;
+  --topbar-h: 56px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --space: 16px;
+  --transition: 0.16s ease;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f7fb;
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --surface-hover: #eef2f8;
+  --border: #e4e8f0;
+  --text: #111827;
+  --text-dim: #6b7280;
+  --accent: #2563eb;
+  --accent-strong: #2563eb;
+  --accent-contrast: #ffffff;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+
+  --input-bg: #f3f5fa;
+  --input-text: #111827;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 30px rgba(16, 24, 40, 0.08);
+  --overlay: rgba(17, 24, 39, 0.45);
+}
+
+/* Compact mode tightens vertical rhythm. */
+:root[data-compact='true'] {
+  --space: 11px;
+  --topbar-h: 48px;
+}

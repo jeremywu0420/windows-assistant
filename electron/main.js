@@ -7,14 +7,37 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, globalShort
 const settingsService = require('./services/settingsService');
 const systemMonitorService = require('./services/systemMonitorService');
 const fileOrganizerService = require('./services/fileOrganizerService');
+const downloadService = require('./services/downloadService');
 const gitService = require('./services/gitService');
 const modeService = require('./services/modeService');
 const projectService = require('./services/projectService');
 const commandService = require('./services/commandService');
 const ruleService = require('./services/ruleService');
 const screenshotService = require('./services/screenshotService');
+const autoLaunchService = require('./services/autoLaunchService');
+const notificationService = require('./services/notificationService');
+const fileWatcherService = require('./services/fileWatcherService');
+const automationService = require('./services/automationService');
 
 const isDev = !app.isPackaged;
+
+// In-memory record of the last organize batch (for undo).
+let lastOrganizeBatch = null;
+
+// --- Minimal file logger (errors are appended to <userData>/logs/app.log) ---
+function logsDir() {
+  return path.join(app.getPath('userData'), 'logs');
+}
+function writeLog(level, message) {
+  try {
+    const dir = logsDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const line = `[${new Date().toISOString()}] [${level}] ${message}\n`;
+    fs.appendFileSync(path.join(dir, 'app.log'), line, 'utf-8');
+  } catch (_) {
+    /* never let logging crash the app */
+  }
+}
 
 // True when the app was launched by Windows at login (we pass --hidden then).
 const startedHidden = process.argv.includes('--hidden');
@@ -29,34 +52,71 @@ if (!gotLock) {
   app.quit();
 }
 
-// "Start at login" is only meaningful for the packaged app — we don't want to
-// register the dev Electron binary into the user's startup.
-function autoLaunchSupported() {
-  return process.platform === 'win32' && app.isPackaged;
-}
-
-// Apply the desired start-at-login state to the OS (launches hidden to tray).
-function applyAutoLaunch(enabled) {
-  if (!autoLaunchSupported()) return { supported: false };
-  try {
-    app.setLoginItemSettings({
-      openAtLogin: !!enabled,
-      enabled: !!enabled,
-      path: process.execPath,
-      args: ['--hidden'],
-    });
-    return { supported: true };
-  } catch (err) {
-    console.error('[main] setLoginItemSettings failed:', err);
-    return { supported: true, error: err.message };
-  }
-}
-
-// Sync the OS state with the user's saved preference (default: on) at startup.
+// Sync the OS start-at-login state with the user's saved preference at startup.
 function configureAutoLaunch() {
   const config = loadConfig();
   const enabled = !(config.general && config.general.autoLaunch === false);
-  applyAutoLaunch(enabled);
+  autoLaunchService.apply(enabled);
+}
+
+// --- File monitoring (watcher → notifications + automations + renderer event) ---
+function monitorFolders(config) {
+  const g = (config && config.general) || {};
+  const folders = [];
+  if (g.downloadsPath) folders.push(g.downloadsPath);
+  if (g.screenshotsPath) folders.push(g.screenshotsPath);
+  if (Array.isArray(g.watchFolders)) folders.push(...g.watchFolders.filter(Boolean));
+  return folders;
+}
+
+async function onNewFile(info) {
+  try {
+    const config = loadConfig();
+    const g = config.general || {};
+    if (g.notifications !== false) {
+      notificationService.notify('偵測到新檔案', `${info.file}（${path.basename(info.folder)}）`);
+    }
+    if (g.automationsEnabled !== false) {
+      const fired = await automationService.handleNewFile(config, info);
+      if (fired.length) writeLog('info', `automation fired for ${info.file}: ${JSON.stringify(fired)}`);
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('app:file-event', { file: info.file, folder: info.folder });
+    }
+  } catch (err) {
+    writeLog('error', `onNewFile failed: ${err.message}`);
+  }
+}
+
+function startMonitoring() {
+  const config = loadConfig();
+  const enabled = config.general && config.general.watchEnabled !== false;
+  if (!enabled) {
+    fileWatcherService.stop();
+    return;
+  }
+  fileWatcherService.setPaused(false);
+  fileWatcherService.start(monitorFolders(config), onNewFile);
+}
+
+function recordHistory(batch) {
+  // Persist a compact history entry (for the dashboard) when enabled.
+  try {
+    const res = settingsService.getSettings();
+    const cfg = res.settings;
+    if (cfg.general && cfg.general.keepHistory === false) return;
+    const moved = (batch.results || []).filter((r) => r.status === 'moved');
+    const entry = {
+      at: new Date().toISOString(),
+      moved: batch.moved,
+      failed: batch.failed,
+      sample: moved.slice(0, 5).map((r) => r.name),
+    };
+    const history = [entry, ...(Array.isArray(cfg.history) ? cfg.history : [])].slice(0, 20);
+    settingsService.saveSettings({ ...cfg, history });
+  } catch (err) {
+    writeLog('error', `recordHistory failed: ${err.message}`);
+  }
 }
 
 function getTrayIconPath() {
@@ -113,9 +173,11 @@ function createWindow(showOnReady = true) {
     if (showOnReady) mainWindow.show();
   });
 
-  // Close button minimises to the system tray instead of quitting.
+  // Close button minimises to the system tray instead of quitting (configurable).
   mainWindow.on('close', (event) => {
-    if (!app.isQuitting) {
+    const cfg = loadConfig();
+    const minimizeToTray = !(cfg.general && cfg.general.minimizeToTray === false);
+    if (!app.isQuitting && minimizeToTray) {
       event.preventDefault();
       mainWindow.hide();
     }
@@ -150,6 +212,37 @@ async function runProgrammingModeFromTray() {
   }
 }
 
+function buildTrayMenu() {
+  const paused = fileWatcherService.isPaused();
+  return Menu.buildFromTemplate([
+    { label: 'Open PC Life Assistant', click: () => showWindow('dashboard') },
+    { label: 'Organize Downloads', click: () => showWindow('downloads') },
+    {
+      label: paused ? 'Resume Monitoring' : 'Pause Monitoring',
+      click: () => {
+        fileWatcherService.setPaused(!paused);
+        refreshTrayMenu();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('app:monitoring-changed', { paused: !paused });
+        }
+      },
+    },
+    { label: 'Settings', click: () => showWindow('settings') },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+}
+
+function refreshTrayMenu() {
+  if (tray) tray.setContextMenu(buildTrayMenu());
+}
+
 function createTray() {
   const iconPath = getTrayIconPath();
   let image = nativeImage.createFromPath(iconPath);
@@ -158,24 +251,7 @@ function createTray() {
   }
   tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image);
   tray.setToolTip('PC Life Assistant');
-
-  const contextMenu = Menu.buildFromTemplate([
-    { label: '開啟 PC Life Assistant', click: () => showWindow('dashboard') },
-    { type: 'separator' },
-    { label: '寫程式模式', click: () => runProgrammingModeFromTray() },
-    { label: '整理 Downloads', click: () => showWindow('files') },
-    { label: '檢查 Git', click: () => showWindow('health') },
-    { type: 'separator' },
-    {
-      label: '離開',
-      click: () => {
-        app.isQuitting = true;
-        app.quit();
-      },
-    },
-  ]);
-
-  tray.setContextMenu(contextMenu);
+  tray.setContextMenu(buildTrayMenu());
   tray.on('click', () => showWindow('dashboard'));
 }
 
@@ -264,7 +340,32 @@ function registerIpc() {
   ipcMain.handle('downloads:detect', async () => fileOrganizerService.detectDownloads());
 
   ipcMain.handle('files:organize', async (_event, items) => {
-    return fileOrganizerService.organize(items);
+    if (!Array.isArray(items)) return { ok: false, moved: 0, failed: 0, results: [], error: '無效的項目' };
+    const result = fileOrganizerService.organize(items);
+    lastOrganizeBatch = result.results || [];
+    recordHistory(result);
+    return result;
+  });
+
+  // Undo the last organize batch (move files back to their original location).
+  ipcMain.handle('downloads:undo', async () => {
+    if (!lastOrganizeBatch || lastOrganizeBatch.length === 0) {
+      return { ok: false, error: '沒有可復原的整理紀錄' };
+    }
+    const result = downloadService.undo(lastOrganizeBatch);
+    if (result.ok) lastOrganizeBatch = null; // consumed
+    return result;
+  });
+
+  ipcMain.handle('downloads:openFolder', async () => {
+    try {
+      const config = loadConfig();
+      const p = await fileOrganizerService.resolveDownloadsPath(config.general && config.general.downloadsPath);
+      const err = await shell.openPath(p);
+      return err ? { ok: false, error: err } : { ok: true, path: p };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
   });
 
   ipcMain.handle('git:check', async () => {
@@ -433,6 +534,107 @@ function registerIpc() {
   ipcMain.handle('screenshots:organize', async (_event, items) => {
     return fileOrganizerService.organize(items);
   });
+
+  // --- File monitoring ---
+  ipcMain.handle('monitor:getState', async () => {
+    const config = loadConfig();
+    return {
+      ok: true,
+      enabled: config.general && config.general.watchEnabled !== false,
+      paused: fileWatcherService.isPaused(),
+      watched: fileWatcherService.watchedCount(),
+      folders: monitorFolders(config),
+    };
+  });
+
+  ipcMain.handle('monitor:setPaused', async (_event, value) => {
+    fileWatcherService.setPaused(!!value);
+    refreshTrayMenu();
+    return { ok: true, paused: fileWatcherService.isPaused() };
+  });
+
+  ipcMain.handle('monitor:restart', async () => {
+    startMonitoring();
+    refreshTrayMenu();
+    return { ok: true, watched: fileWatcherService.watchedCount() };
+  });
+
+  // --- Automations ---
+  ipcMain.handle('automations:list', async () => {
+    const config = loadConfig();
+    return { ok: true, automations: automationService.list(config) };
+  });
+
+  ipcMain.handle('automations:save', async (_event, automations) => {
+    if (!Array.isArray(automations)) return { ok: false, error: '無效的規則資料' };
+    const res = settingsService.getSettings();
+    return settingsService.saveSettings({ ...res.settings, automations });
+  });
+
+  // --- Notifications ---
+  ipcMain.handle('notifications:test', async () => notificationService.notify('PC Life Assistant', '通知測試 ✅'));
+
+  // --- Advanced: export / import / reset / logs ---
+  ipcMain.handle('settings:export', async () => {
+    try {
+      const res = settingsService.getSettings();
+      const out = await dialog.showSaveDialog(mainWindow, {
+        title: '匯出設定',
+        defaultPath: 'pc-life-assistant-settings.json',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (out.canceled || !out.filePath) return { ok: false, canceled: true };
+      fs.writeFileSync(out.filePath, JSON.stringify(res.settings, null, 2), 'utf-8');
+      return { ok: true, path: out.filePath };
+    } catch (err) {
+      writeLog('error', `settings:export failed: ${err.message}`);
+      return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('settings:import', async () => {
+    try {
+      const inp = await dialog.showOpenDialog(mainWindow, {
+        title: '匯入設定',
+        properties: ['openFile'],
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      });
+      if (inp.canceled || !inp.filePaths || !inp.filePaths.length) return { ok: false, canceled: true };
+      const raw = fs.readFileSync(inp.filePaths[0], 'utf-8');
+      const parsed = JSON.parse(raw); // throws on invalid JSON
+      const saved = settingsService.saveSettings(parsed);
+      if (saved.ok) {
+        configureAutoLaunch();
+        startMonitoring();
+        refreshTrayMenu();
+      }
+      return saved;
+    } catch (err) {
+      writeLog('error', `settings:import failed: ${err.message}`);
+      return { ok: false, error: `匯入失敗：${err.message}` };
+    }
+  });
+
+  ipcMain.handle('settings:reset', async () => {
+    const saved = settingsService.saveSettings(settingsService.DEFAULT_SETTINGS);
+    if (saved.ok) {
+      configureAutoLaunch();
+      startMonitoring();
+      refreshTrayMenu();
+    }
+    return saved;
+  });
+
+  ipcMain.handle('logs:open', async () => {
+    try {
+      const dir = logsDir();
+      fs.mkdirSync(dir, { recursive: true });
+      await shell.openPath(dir);
+      return { ok: true, path: dir };
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -457,10 +659,13 @@ function openCommandPalette() {
 app.whenReady().then(() => {
   configureAutoLaunch();
   registerIpc();
-  // Auto-started at login → create the window hidden (tray only). Manual launch
-  // → show the window normally. Clicking the tray icon reveals it either way.
-  createWindow(!startedHidden);
+  // Stay hidden (tray only) when launched at login (--hidden) or when the
+  // "start minimized" preference is on; otherwise show the window normally.
+  const cfg = loadConfig();
+  const startHidden = startedHidden || (cfg.general && cfg.general.startMinimized === true);
+  createWindow(!startHidden);
   createTray();
+  startMonitoring();
 
   // Global shortcut: Ctrl+Shift+P opens the Command Palette (works even unfocused).
   const registered = globalShortcut.register('CommandOrControl+Shift+P', openCommandPalette);
