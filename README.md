@@ -183,7 +183,7 @@ npm run package:dir   # 輸出到 release/win-unpacked/
 可修改的位置：
 
 - `general.vscodePath`：VS Code 執行檔路徑（「寫程式模式」優先使用）。可在「設定」頁用 **自動偵測 / 選擇檔案 / 測試開啟** 設定；留空時會自動偵測（`<家目錄>\AppData\Local\Programs\Microsoft VS Code\Code.exe`、`%LOCALAPPDATA%`、`Program Files`、`where code`）。
-- `general.downloadsPath`：自訂 Downloads 路徑（留空 → 使用者家目錄下的 `Downloads`）。
+- `general.downloadsPath`：要整理的 Downloads 路徑。可在「設定」或「整理 Downloads」頁用 **自動偵測 / 選擇資料夾** 設定；留空時會自動偵測（**支援 OneDrive 重新導向**：先讀 Windows 登錄的 Downloads known folder，再試 `%OneDrive%\Downloads`、`%USERPROFILE%\Downloads`、`<家目錄>\Downloads`／`下載`）。
 - `general.monitorDrives`：要監控的多顆磁碟，例如 `["C:\\", "D:\\"]`；設成空陣列 `[]` 會自動偵測所有可用磁碟。仍相容舊版單一字串 `monitorDrive`（只有在沒有 `monitorDrives` 時才使用）。任一顆磁碟剩餘空間 < 20% 都會扣 Health Score 並在提醒中標明是哪一顆。
 - `modes[]`：每個工作模式的 `apps` / `folders` / `urls` / `commands`。可在「工作模式」頁按 **✏️ 編輯模式** 用 UI 新增/刪除模式與各項目，不必手改 JSON。
   - `apps[]` 可用字串路徑，或物件 `{ "path": "...", "name": "VS Code", "icon": "🆚" }` 指定友善名稱與圖示。

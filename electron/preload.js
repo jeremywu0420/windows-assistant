@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld('api', {
   // File organizer
   scanDownloads: () => ipcRenderer.invoke('files:scan'),
   organizeFiles: (items) => ipcRenderer.invoke('files:organize', items),
+  detectDownloads: () => ipcRenderer.invoke('downloads:detect'),
 
   // Git
   checkGit: () => ipcRenderer.invoke('git:check'),

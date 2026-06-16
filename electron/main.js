@@ -154,9 +154,10 @@ function registerIpc() {
         monitorDrives: config.general && config.general.monitorDrives,
         monitorDrive: config.general && config.general.monitorDrive,
       });
-      const unsorted = fileOrganizerService.countUnsorted(
+      const downloadsPath = await fileOrganizerService.resolveDownloadsPath(
         config.general && config.general.downloadsPath
       );
+      const unsorted = fileOrganizerService.countUnsorted(downloadsPath);
       const git = await gitService.checkAll(config.projects);
       const health = systemMonitorService.computeHealthScore(metrics, {
         unsortedDownloads: unsorted.count,
@@ -218,8 +219,13 @@ function registerIpc() {
 
   ipcMain.handle('files:scan', async () => {
     const config = loadConfig();
-    return fileOrganizerService.scan(config.general && config.general.downloadsPath);
+    const downloadsPath = await fileOrganizerService.resolveDownloadsPath(
+      config.general && config.general.downloadsPath
+    );
+    return fileOrganizerService.scan(downloadsPath);
   });
+
+  ipcMain.handle('downloads:detect', async () => fileOrganizerService.detectDownloads());
 
   ipcMain.handle('files:organize', async (_event, items) => {
     return fileOrganizerService.organize(items);

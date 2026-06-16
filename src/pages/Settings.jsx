@@ -25,6 +25,11 @@ export default function Settings() {
   const [detecting, setDetecting] = useState(false);
   const [testing, setTesting] = useState(false);
 
+  // Downloads folder management
+  const [downloadsPath, setDownloadsPath] = useState('');
+  const [downloadsMsg, setDownloadsMsg] = useState(null);
+  const [detectingDl, setDetectingDl] = useState(false);
+
   const load = async () => {
     if (!window.api) {
       setToast({ type: 'error', msg: '無法連接 Electron 主程序。' });
@@ -35,6 +40,7 @@ export default function Settings() {
     setConfigPath(res.path || '');
     setText(JSON.stringify(res.settings, null, 2));
     setVscodePath((res.settings.general && res.settings.general.vscodePath) || '');
+    setDownloadsPath((res.settings.general && res.settings.general.downloadsPath) || '');
     if (!res.ok) setToast({ type: 'error', msg: res.error });
     setLoading(false);
   };
@@ -115,6 +121,53 @@ export default function Settings() {
     );
   };
 
+  // --- Downloads folder ---
+  const persistGeneral = async (patch) => {
+    const res = await window.api.getSettings();
+    const next = { ...res.settings, general: { ...(res.settings.general || {}), ...patch } };
+    const r = await window.api.saveSettings(next);
+    if (r.ok) setText(JSON.stringify(next, null, 2));
+    return r;
+  };
+
+  const saveDownloadsPath = async () => {
+    const r = await persistGeneral({ downloadsPath: downloadsPath.trim() });
+    setDownloadsMsg(r.ok ? { type: 'ok', msg: '已儲存 Downloads 路徑。' } : { type: 'error', msg: r.error || '儲存失敗' });
+  };
+
+  const detectDownloads = async () => {
+    setDetectingDl(true);
+    setDownloadsMsg(null);
+    const r = await window.api.detectDownloads();
+    setDetectingDl(false);
+    if (r.ok) {
+      setDownloadsPath(r.path);
+      const saved = await persistGeneral({ downloadsPath: r.path });
+      setDownloadsMsg(
+        saved.ok
+          ? { type: 'ok', msg: `已自動偵測並儲存：${r.path}` }
+          : { type: 'error', msg: saved.error || '偵測成功但儲存失敗' }
+      );
+    } else {
+      setDownloadsMsg({ type: 'error', msg: r.error || '找不到 Downloads 資料夾，請手動選擇。' });
+    }
+  };
+
+  const pickDownloads = async () => {
+    setDownloadsMsg(null);
+    const r = await window.api.pickPath({ type: 'folder', title: '選擇 Downloads 資料夾' });
+    if (r.canceled) return;
+    if (r.ok) {
+      setDownloadsPath(r.path);
+      const saved = await persistGeneral({ downloadsPath: r.path });
+      setDownloadsMsg(
+        saved.ok ? { type: 'ok', msg: `已選擇並儲存：${r.path}` } : { type: 'error', msg: saved.error || '儲存失敗' }
+      );
+    } else {
+      setDownloadsMsg({ type: 'error', msg: r.error || '選擇資料夾失敗' });
+    }
+  };
+
   const pickVscode = async () => {
     setVscodeMsg(null);
     const r = await window.api.pickVSCodeFile();
@@ -177,6 +230,33 @@ export default function Settings() {
           </ActionButton>
         </div>
         {vscodeMsg ? <div className={`toast ${vscodeMsg.type}`}>{vscodeMsg.msg}</div> : null}
+      </div>
+
+      {/* Downloads 資料夾 */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <div className="section-title">Downloads 資料夾</div>
+        <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+          「整理 Downloads」會掃描這個資料夾。可手動輸入、自動偵測（支援 OneDrive 重新導向），或選擇資料夾。留空時會自動偵測。
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+          <input
+            style={inputStyle}
+            value={downloadsPath}
+            placeholder="例如 D:\\我的資料庫\\Downloads（留空 = 自動偵測）"
+            onChange={(e) => setDownloadsPath(e.target.value)}
+            spellCheck={false}
+          />
+          <ActionButton icon="🧭" busy={detectingDl} onClick={detectDownloads}>
+            自動偵測
+          </ActionButton>
+          <ActionButton icon="📁" onClick={pickDownloads}>
+            選擇資料夾
+          </ActionButton>
+          <ActionButton variant="primary" icon="💾" onClick={saveDownloadsPath}>
+            儲存路徑
+          </ActionButton>
+        </div>
+        {downloadsMsg ? <div className={`toast ${downloadsMsg.type}`}>{downloadsMsg.msg}</div> : null}
       </div>
 
       {loading ? (

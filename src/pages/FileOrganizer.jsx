@@ -5,8 +5,10 @@ export default function FileOrganizer() {
   const [scan, setScan] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [organizing, setOrganizing] = useState(false);
+  const [detecting, setDetecting] = useState(false);
   const [moveResult, setMoveResult] = useState(null);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   const doScan = async () => {
     if (!window.api) {
@@ -24,6 +26,42 @@ export default function FileOrganizer() {
       setScan(res);
     }
     setScanning(false);
+  };
+
+  // Persist only general.downloadsPath without disturbing the rest of the config.
+  const persistDownloadsPath = async (p) => {
+    const res = await window.api.getSettings();
+    const next = { ...res.settings, general: { ...(res.settings.general || {}), downloadsPath: p } };
+    await window.api.saveSettings(next);
+  };
+
+  const autoDetect = async () => {
+    setDetecting(true);
+    setError('');
+    setInfo('');
+    const r = await window.api.detectDownloads();
+    setDetecting(false);
+    if (r.ok) {
+      await persistDownloadsPath(r.path);
+      setInfo(`已自動偵測 Downloads 路徑：${r.path}`);
+      await doScan();
+    } else {
+      setError(r.error || '自動偵測失敗，請改用「選擇資料夾」。');
+    }
+  };
+
+  const pickFolder = async () => {
+    setError('');
+    setInfo('');
+    const r = await window.api.pickPath({ type: 'folder', title: '選擇 Downloads 資料夾' });
+    if (r.canceled) return;
+    if (r.ok) {
+      await persistDownloadsPath(r.path);
+      setInfo(`已設定 Downloads 路徑：${r.path}`);
+      await doScan();
+    } else {
+      setError(r.error || '選擇資料夾失敗');
+    }
   };
 
   const doOrganize = async () => {
@@ -45,6 +83,22 @@ export default function FileOrganizer() {
       </p>
 
       {error ? <div className="error-banner">⚠️ {error}</div> : null}
+      {info ? <div className="toast ok" style={{ marginBottom: 12 }}>{info}</div> : null}
+
+      <div className="card" style={{ marginBottom: 14 }}>
+        <div className="muted" style={{ fontSize: 13 }}>
+          目前要整理的資料夾：
+          <span className="path">{scan ? scan.downloadsPath : '（按「掃描」或「自動偵測」）'}</span>
+        </div>
+        <div className="button-row" style={{ marginTop: 10, marginBottom: 0 }}>
+          <ActionButton icon="🧭" busy={detecting} onClick={autoDetect}>
+            自動偵測路徑
+          </ActionButton>
+          <ActionButton icon="📁" onClick={pickFolder}>
+            選擇資料夾
+          </ActionButton>
+        </div>
+      </div>
 
       <div className="button-row">
         <ActionButton variant="primary" icon="🔍" busy={scanning} onClick={doScan}>

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execFile } = require('child_process');
 
 /**
  * Downloads file organizer service.
@@ -33,6 +34,72 @@ const CATEGORY_FOLDER_NAMES = new Set([
 function getDownloadsPath(override) {
   if (override && override.trim()) return override;
   return path.join(os.homedir(), 'Downloads');
+}
+
+// Cache the detected path so we don't run `reg query` on every status refresh.
+let cachedDetected = null;
+
+function expandEnv(p) {
+  return p.replace(/%([^%]+)%/g, (_, name) => process.env[name] || `%${name}%`);
+}
+
+/**
+ * Read the real "Downloads" known-folder path from the Windows registry.
+ * This correctly resolves OneDrive-redirected Downloads folders.
+ */
+function queryRegistryDownloads() {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') return resolve(null);
+    const key = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders';
+    const guid = '{374DE290-123F-4565-9164-39C4925E467B}';
+    execFile('reg', ['query', key, '/v', guid], { timeout: 5000, windowsHide: true }, (err, stdout) => {
+      if (err || !stdout) return resolve(null);
+      const m = stdout.match(/REG_(?:EXPAND_)?SZ\s+(.+?)\s*$/m);
+      resolve(m ? expandEnv(m[1].trim()) : null);
+    });
+  });
+}
+
+/**
+ * Auto-detect the Downloads folder, including OneDrive-redirected setups.
+ * Order: Windows registry known folder → %OneDrive%\Downloads(/下載) →
+ *        %USERPROFILE%\Downloads(/下載) → <home>\Downloads(/下載).
+ */
+async function detectDownloads() {
+  const candidates = [];
+  const reg = await queryRegistryDownloads();
+  if (reg) candidates.push(reg);
+  for (const envName of ['OneDrive', 'OneDriveConsumer', 'OneDriveCommercial', 'USERPROFILE']) {
+    if (process.env[envName]) {
+      candidates.push(path.join(process.env[envName], 'Downloads'));
+      candidates.push(path.join(process.env[envName], '下載'));
+    }
+  }
+  candidates.push(path.join(os.homedir(), 'Downloads'));
+  candidates.push(path.join(os.homedir(), '下載'));
+
+  const seen = new Set();
+  for (const c of candidates) {
+    if (!c || seen.has(c)) continue;
+    seen.add(c);
+    try {
+      if (fs.existsSync(c) && fs.statSync(c).isDirectory()) {
+        cachedDetected = c;
+        return { ok: true, path: c, candidates: [...seen] };
+      }
+    } catch (_) {
+      /* keep trying */
+    }
+  }
+  return { ok: false, error: '找不到 Downloads 資料夾，請手動選擇。', candidates: [...seen] };
+}
+
+/** Resolve the effective Downloads path: explicit setting → detected → home\Downloads. */
+async function resolveDownloadsPath(override) {
+  if (override && override.trim()) return override;
+  if (cachedDetected) return cachedDetected;
+  const d = await detectDownloads();
+  return d.ok ? d.path : path.join(os.homedir(), 'Downloads');
 }
 
 function categoryForExt(ext) {
@@ -192,6 +259,8 @@ module.exports = {
   CATEGORY_RULES,
   OTHERS_CATEGORY,
   getDownloadsPath,
+  detectDownloads,
+  resolveDownloadsPath,
   categoryForExt,
   scan,
   countUnsorted,
