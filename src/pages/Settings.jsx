@@ -23,6 +23,7 @@ export default function Settings() {
   const [vscodePath, setVscodePath] = useState('');
   const [vscodeMsg, setVscodeMsg] = useState(null);
   const [detecting, setDetecting] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   const load = async () => {
     if (!window.api) {
@@ -100,6 +101,20 @@ export default function Settings() {
     }
   };
 
+  const testVscode = async () => {
+    setTesting(true);
+    setVscodeMsg(null);
+    // Persist any manual edit first so the test uses what's in the box.
+    if (vscodePath.trim()) await persistVscodePath(vscodePath.trim());
+    const r = await window.api.testVSCode();
+    setTesting(false);
+    setVscodeMsg(
+      r.ok
+        ? { type: 'ok', msg: `已開啟 VS Code：${r.path}` }
+        : { type: 'error', msg: r.error || '測試失敗' }
+    );
+  };
+
   const pickVscode = async () => {
     setVscodeMsg(null);
     const r = await window.api.pickVSCodeFile();
@@ -156,6 +171,9 @@ export default function Settings() {
           </ActionButton>
           <ActionButton variant="primary" icon="💾" onClick={saveVscodePath}>
             儲存路徑
+          </ActionButton>
+          <ActionButton icon="🚀" busy={testing} onClick={testVscode}>
+            測試開啟
           </ActionButton>
         </div>
         {vscodeMsg ? <div className={`toast ${vscodeMsg.type}`}>{vscodeMsg.msg}</div> : null}

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import ActionButton from '../components/ActionButton.jsx';
+import ModeEditor from '../components/ModeEditor.jsx';
 
 const STEP_LABEL = { app: '應用程式', folder: '資料夾', url: '網址', command: '指令' };
 
@@ -8,21 +9,24 @@ export default function Modes({ externalResult }) {
   const [busyMode, setBusyMode] = useState(null);
   const [result, setResult] = useState(externalResult || null);
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     if (externalResult) setResult(externalResult);
   }, [externalResult]);
 
-  useEffect(() => {
-    (async () => {
-      if (!window.api) {
-        setError('無法連接 Electron 主程序。');
-        return;
-      }
-      const res = await window.api.listModes();
-      setModes(res.modes || []);
-    })();
+  const loadModes = useCallback(async () => {
+    if (!window.api) {
+      setError('無法連接 Electron 主程序。');
+      return;
+    }
+    const res = await window.api.listModes();
+    setModes(res.modes || []);
   }, []);
+
+  useEffect(() => {
+    loadModes();
+  }, [loadModes]);
 
   const run = async (name) => {
     setBusyMode(name);
@@ -34,10 +38,29 @@ export default function Modes({ externalResult }) {
 
   return (
     <div>
-      <h1 className="page-title">工作模式</h1>
-      <p className="page-subtitle">一鍵啟動：開啟 App、資料夾、網址，並執行指令。</p>
+      <div className="row-between">
+        <div>
+          <h1 className="page-title">工作模式</h1>
+          <p className="page-subtitle">一鍵啟動：開啟 App、資料夾、網址，並執行指令。</p>
+        </div>
+        <ActionButton
+          variant={editing ? 'primary' : 'ghost'}
+          icon={editing ? '✅' : '✏️'}
+          onClick={() => setEditing((v) => !v)}
+        >
+          {editing ? '完成編輯' : '編輯模式'}
+        </ActionButton>
+      </div>
 
       {error ? <div className="error-banner">⚠️ {error}</div> : null}
+
+      {editing ? (
+        <ModeEditor
+          onSaved={() => {
+            loadModes();
+          }}
+        />
+      ) : null}
 
       {modes.length === 0 ? (
         <div className="card">

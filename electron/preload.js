@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('api', {
   // VS Code path
   detectVSCode: () => ipcRenderer.invoke('vscode:detect'),
   pickVSCodeFile: () => ipcRenderer.invoke('dialog:pickVSCode'),
+  testVSCode: () => ipcRenderer.invoke('vscode:test'),
 
   // Misc
   openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url),

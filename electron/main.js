@@ -195,7 +195,25 @@ function registerIpc() {
 
   ipcMain.handle('mode:run', async (_event, modeName) => {
     const config = loadConfig();
-    return modeService.runMode(config, modeName);
+    return modeService.runMode(config, modeName, {
+      // Let the user decide when a dev server is already running on the port.
+      onDevServerRunning: async ({ port, isOwn, command }) => {
+        const parent = mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+        const { response } = await dialog.showMessageBox(parent, {
+          type: 'question',
+          buttons: ['略過（建議）', '仍要新開'],
+          defaultId: 0,
+          cancelId: 0,
+          noLink: true,
+          title: '開發伺服器已在執行',
+          message: isOwn
+            ? `localhost:${port} 已在執行（本專案）。`
+            : `localhost:${port} 已被其他程式佔用（不是本專案）。`,
+          detail: `指令：${command}\n要略過，還是仍要強制再開一個？`,
+        });
+        return response === 1 ? 'launch' : 'skip';
+      },
+    });
   });
 
   ipcMain.handle('files:scan', async () => {
@@ -232,6 +250,16 @@ function registerIpc() {
   ipcMain.handle('vscode:detect', async () => {
     const config = loadConfig();
     return modeService.detectVSCode(config.general && config.general.vscodePath);
+  });
+
+  ipcMain.handle('vscode:test', async () => {
+    const config = loadConfig();
+    const det = await modeService.detectVSCode(config.general && config.general.vscodePath);
+    if (!det.ok) return { ok: false, error: det.error };
+    const launch = await modeService.launchExecutable(det.path);
+    return launch.ok
+      ? { ok: true, path: det.path }
+      : { ok: false, path: det.path, error: launch.error || '啟動失敗' };
   });
 
   ipcMain.handle('dialog:pickVSCode', async () => {

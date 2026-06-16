@@ -182,9 +182,12 @@ npm run package:dir   # 輸出到 release/win-unpacked/
 
 可修改的位置：
 
+- `general.vscodePath`：VS Code 執行檔路徑（「寫程式模式」優先使用）。可在「設定」頁用 **自動偵測 / 選擇檔案 / 測試開啟** 設定；留空時會自動偵測（`<家目錄>\AppData\Local\Programs\Microsoft VS Code\Code.exe`、`%LOCALAPPDATA%`、`Program Files`、`where code`）。
 - `general.downloadsPath`：自訂 Downloads 路徑（留空 → 使用者家目錄下的 `Downloads`）。
 - `general.monitorDrives`：要監控的多顆磁碟，例如 `["C:\\", "D:\\"]`；設成空陣列 `[]` 會自動偵測所有可用磁碟。仍相容舊版單一字串 `monitorDrive`（只有在沒有 `monitorDrives` 時才使用）。任一顆磁碟剩餘空間 < 20% 都會扣 Health Score 並在提醒中標明是哪一顆。
-- `modes[]`：每個工作模式的 `apps` / `folders` / `urls` / `commands`。
+- `modes[]`：每個工作模式的 `apps` / `folders` / `urls` / `commands`。可在「工作模式」頁按 **✏️ 編輯模式** 用 UI 新增/刪除模式與各項目，不必手改 JSON。
+  - `apps[]` 可用字串路徑，或物件 `{ "path": "...", "name": "VS Code", "icon": "🆚" }` 指定友善名稱與圖示。
+  - 啟動含 `npm run dev` 的指令時，會先檢查該埠（預設 5173，會讀指令中的 `--port`）是否已在執行：若本專案已在跑會略過並提示；被其他程式佔用也會提醒；並可選擇「仍要新開」。
   - ⚠️ `urls` 不要放 App 自己的開發網址 `http://localhost:5173`。那是 Electron 內部開發用的，放進去啟動工作模式時會用瀏覽器（Edge/Chrome）開啟並顯示「無法連接 Electron 主程序」。開發模式下若偵測到此網址會自動略過。
 - `projects[]`：要追蹤 Git 的專案與提醒時數（也是 Project Hub 與 Command Palette 的來源）。
 - `rules[]`（v1.1）：Smart Rules，每條含 `type`（`downloadsCount` / `ramUsage` / `projectStale` / `diskFree`）、`threshold`、`level`、`enabled`。可在「Smart Rules」頁面用 UI 調整。

@@ -19,7 +19,11 @@
     {
       "name": "寫程式模式",
       "apps": [
-        "C:\\Users\\Jeremy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+        {
+          "path": "C:\\Users\\Jeremy\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+          "name": "VS Code",
+          "icon": "🆚"
+        }
       ],
       "folders": [
         "D:\\我的資料庫\\Desktop\\windows assistant\\windows-assistant"
