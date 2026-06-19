@@ -17,7 +17,7 @@
 | ❤️ **PC 健康監控** | CPU / RAM / 磁碟 / 開機時間 + PC Health Score（100 分起算扣分制） |
 | 🔧 **Git / 備份提醒** | 檢查專案是否為 git repo、未 commit 檔案數、距上次 commit 時間（只提醒，不自動 commit / push） |
 | 🟦 **System Tray 常駐** | 關閉視窗會縮小到右下角系統匣，右鍵選單可快速操作 |
-| 📁 **Project Hub**（v1.1） | 集中管理 config 內的專案，一鍵開啟資料夾 / VS Code / Terminal / `npm run dev` / Git status |
+| 📁 **Project Hub**（v1.1） | 集中管理掃描到的專案，可釘選、批次加入工作區，並用選取專案直接建立工作模式 |
 | ⌨️ **Command Palette**（v1.1） | 全域快捷鍵 **Ctrl+Shift+P**，搜尋並執行指令（導航、開啟專案、跑 npm run dev、啟動模式） |
 | 🔔 **Smart Rules**（v1.1） | JSON 規則：Downloads 數量 / RAM% / 專案太久沒 commit / Disk 剩餘空間，達門檻時提醒（只提醒，不自動執行危險操作） |
 | 🖼️ **Screenshot Organizer**（v1.1） | 依檔名關鍵字將截圖分類到 Code / Circuit / Report / School / Other，先預覽再移動、不刪除、重名加編號 |
@@ -147,6 +147,17 @@ npm run package:dir   # 輸出到 release/win-unpacked/
 - 用 ↑ ↓ 選擇、Enter 執行、Esc 關閉。
 - 內建：開啟各頁面、用 VS Code 開啟某專案、執行某專案的 `npm run dev`、啟動工作模式。
 - 指令清單由 `electron/services/commandService.js`（action registry）統一管理，會依 `config` 的 projects / modes 動態產生。
+
+---
+
+## 📁 Project Hub 建立工作模式
+
+Project Hub 會掃描根目錄下的專案，依 Git repo、可執行 `npm run dev`、資料夾類型與檔案數整理成清單。
+
+- 可用左側 `ADD` / `PIN` 按鈕把專案加入或移出每日工作台。
+- 可勾選多個專案，輸入工作模式名稱後按 **建立工作模式**。
+- 建立的工作模式會自動加入 VS Code 啟動項、專案資料夾，以及可用的 `npm run dev` 指令。
+- 已加入工作區的專案會固定顯示在每日工作台，也能從 Project Hub 批次移除。
 
 ---
 
