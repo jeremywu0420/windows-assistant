@@ -137,11 +137,23 @@ function createDefaultSettings() {
 
 const DEFAULT_SETTINGS = createDefaultSettings();
 
-function bundledConfigPath() {
+function bundledConfigDir() {
   if (electronApp && electronApp.isPackaged) {
-    return path.join(process.resourcesPath, 'config', 'user-settings.json');
+    return path.join(process.resourcesPath, 'config');
   }
-  return path.join(__dirname, '..', '..', 'config', 'user-settings.json');
+  return path.join(__dirname, '..', '..', 'config');
+}
+
+// Seed source for a fresh config. The real `user-settings.json` is git-ignored
+// (it holds personal paths), so on a clean checkout / packaged build only the
+// sanitized `user-settings.example.json` template exists — fall back to it.
+function bundledConfigPath() {
+  const dir = bundledConfigDir();
+  const primary = path.join(dir, 'user-settings.json');
+  if (fs.existsSync(primary)) return primary;
+  const example = path.join(dir, 'user-settings.example.json');
+  if (fs.existsSync(example)) return example;
+  return primary;
 }
 
 function activeConfigPath() {

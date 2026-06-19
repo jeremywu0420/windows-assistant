@@ -131,7 +131,8 @@ pc-life-assistant/
     styles/                 #   Global styles and design tokens
     utils/                  #   Formatting helpers
   config/
-    user-settings.json      # Default local settings template
+    user-settings.example.json  # Sanitized settings template (the real, git-ignored
+                                #   user-settings.json is created from it at runtime)
   scripts/
     clean-dist.js           # Build cleanup helper
     generate-icons.js       # Icon generation helper
@@ -220,7 +221,7 @@ The app stores preferences in a local JSON settings file:
 - theme and compact mode;
 - notification and automation preferences.
 
-In development, settings live in `config/user-settings.json`. In a packaged build, they live in `%APPDATA%\PC Life Assistant\user-settings.json`.
+The repository ships a sanitized template, `config/user-settings.example.json`. On first run the app creates its own settings file from that template — `config/user-settings.json` in development (git-ignored, because it records personal folder paths) and `%APPDATA%\PC Life Assistant\user-settings.json` in a packaged build. Your real paths never need to be committed.
 
 ---
 

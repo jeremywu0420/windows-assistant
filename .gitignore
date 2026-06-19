@@ -30,3 +30,7 @@ Thumbs.db
 
 # Local runtime state (written by the app at runtime)
 config/runtime-state.json
+
+# Real settings file — written by the app in dev and contains personal paths.
+# A sanitized template is committed as config/user-settings.example.json instead.
+config/user-settings.json

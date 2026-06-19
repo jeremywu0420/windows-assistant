@@ -1,14 +1,15 @@
 {
   "general": {
-    "downloadsPath": "C:\\Users\\jerem\\Downloads",
-    "monitorDrives": [
-      "C:\\"
-    ],
-    "screenshotsPath": "C:\\Users\\jerem\\Pictures\\Screenshots",
-    "vscodePath": "C:\\Users\\jerem\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+    "downloadsPath": "",
+    "monitorDrives": [],
+    "monitorDrive": "",
+    "screenshotsPath": "",
+    "vscodePath": "",
     "autoLaunch": true,
     "minimizeToTray": true,
     "startMinimized": false,
+    "showOnStartup": true,
+    "showOnResume": true,
     "notifications": true,
     "autoUpdate": true,
     "theme": "system",
@@ -16,24 +17,15 @@
     "compactMode": false,
     "watchEnabled": true,
     "watchFolders": [],
-    "projectScanRoots": [
-      "C:\\Users\\jerem\\Desktop",
-      "C:\\Users\\jerem\\Documents",
-      "C:\\Users\\jerem\\Downloads"
-    ],
+    "projectScanRoots": [],
     "automationsEnabled": true,
     "askBeforeOrganizing": true,
     "keepHistory": true,
-    "showOnStartup": true,
-    "showOnResume": true
+    "firstRunCompleted": false,
+    "lastSetupCheckAt": ""
   },
   "projectHub": {
-    "scanRoots": [
-      "C:\\Users\\jerem\\Desktop",
-      "C:\\Users\\jerem\\Documents",
-      "C:\\Users\\jerem\\Downloads",
-      "C:\\Users\\jerem\\Pictures"
-    ],
+    "scanRoots": [],
     "excludeFolders": [
       "C:\\Windows",
       "C:\\Program Files",
@@ -52,10 +44,29 @@
       "release",
       "release-auto"
     ],
-    "maxDepth": 2
+    "maxDepth": 2,
+    "pinnedProjects": []
+  },
+  "cleanup": {
+    "enabledCategories": [],
+    "lastScanAt": ""
+  },
+  "healthGuard": {
+    "enabled": true,
+    "mode": "normal",
+    "intervalMinutes": 5,
+    "cooldownMinutes": 30,
+    "cpuTempC": 85,
+    "gpuTempC": 85,
+    "ramPercent": 85,
+    "diskFreeGb": 50,
+    "diskFreePercent": 15
+  },
+  "ui": {
+    "dismissedHints": []
   },
   "screenshots": {
-    "path": "C:\\Users\\jerem\\Pictures\\Screenshots",
+    "path": "",
     "keywords": {},
     "organizer": {
       "organizeByDate": true,
@@ -101,38 +112,9 @@
       "level": "danger"
     }
   ],
-  "modes": [
-    {
-      "name": "開發模式",
-      "apps": [
-        {
-          "path": "C:\\Users\\jerem\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
-          "name": "VS Code",
-          "icon": "VS"
-        }
-      ],
-      "folders": [
-        "C:\\Users\\jerem\\Desktop\\windows assistant\\windows-assistant"
-      ],
-      "urls": [
-        "https://github.com/jeremywu0420/windows-assistant"
-      ],
-      "commands": [
-        {
-          "cwd": "C:\\Users\\jerem\\Desktop\\windows assistant\\windows-assistant",
-          "command": "npm run dev"
-        }
-      ]
-    }
-  ],
-  "projects": [
-    {
-      "name": "windows-assistant",
-      "path": "C:\\Users\\jerem\\Desktop\\windows assistant\\windows-assistant",
-      "gitReminderHours": 2,
-      "backupReminderHours": 24
-    }
-  ],
+  "modes": [],
+  "projects": [],
   "automations": [],
-  "history": []
+  "history": [],
+  "cheatsheet": []
 }
