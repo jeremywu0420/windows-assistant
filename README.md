@@ -1,199 +1,199 @@
-# PC Life Assistant
+<div align="center">
 
-PC Life Assistant is a Windows desktop assistant built for students, engineers, and makers who manage many projects, files, screenshots, tools, and local development workflows.
+# 🖥️ PC Life Assistant
 
-It combines a daily workspace dashboard, project launcher, file organizer, system health monitor, automation rules, and safe cleanup tools into one Electron app. The goal is not to replace a task manager or an IDE, but to reduce the small repeated steps around everyday computer work.
+**A Windows desktop workspace assistant for students, engineers, and makers.**
 
-## Current Version
+One place to launch projects, organize files, monitor system health, and keep daily development workflows tidy — without replacing your task manager or IDE.
 
-- App version: `2.2.0`
-- Platform focus: Windows desktop
-- Runtime: Electron + React + Vite + Node.js
-- Language: JavaScript
-- License: MIT
+[![Version](https://img.shields.io/badge/version-2.2.0-2f7bf6.svg)](https://github.com/jeremywu0420/windows-assistant/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078d6.svg)](#requirements)
+[![Electron](https://img.shields.io/badge/Electron-42-47848f.svg)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6-646cff.svg)](https://vitejs.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 
-## Key Features
+</div>
+
+<div align="center">
+  <img src="docs/screenshots/01-dashboard.png" alt="PC Life Assistant — Daily Dashboard" width="90%" />
+  <br/>
+  <sub><b>Daily Dashboard</b> · PC health score, live CPU / RAM / disk / temperature, pinned projects, Git reminders, and one-click actions.</sub>
+</div>
+
+---
+
+## ✨ Overview
+
+PC Life Assistant combines a daily workspace dashboard, project launcher, file organizer, system health monitor, automation rules, and safe cleanup tools into a single Electron app.
+
+The goal is not to be another todo list — it's to **remove the small repeated steps** around everyday computer work: opening the same folders and tools, sorting the Downloads folder, keeping an eye on disk space and temperatures, and remembering which projects still need a Git commit.
+
+- 🔒 **Review-first & safe by design** — file actions preview before moving, never auto-delete, and Git features are read-only.
+- 🧩 **No account, no cloud, no database** — every setting lives in a local JSON file.
+- 🛡️ **No admin rights required** — works entirely within the folders you configure.
+
+> The screenshots in this README are captured from the live app. The interface ships in Traditional Chinese; English captions are provided under each image.
+
+---
+
+## 🚀 Key Features
 
 | Area | What it does |
 | --- | --- |
-| Daily Dashboard | Shows health score, CPU, RAM, disk status, pinned projects, Git reminders, and recent activity. |
-| Project Hub | Scans selected project roots, classifies projects, filters by type/status, pins projects, and creates work modes from selected projects. |
-| Work Modes | Opens apps, folders, URLs, and shell commands as a repeatable workspace. Useful for coding, study, design, reports, or hardware work. |
-| Workspace Templates | Creates starter project folders for common project types such as web, Python, JavaScript, C/C++, embedded, Arduino, FPGA, documents, and custom workspaces. |
-| Clean Center | Reviews temporary files, caches, large files, duplicates, downloads, recycle bin size, and project-related cleanup suggestions. |
-| Downloads Organizer | Scans downloads, previews planned moves, classifies files, avoids deletion, and handles duplicate filenames safely. |
-| Screenshot Organizer | Groups screenshot images by date and category using configurable keyword rules. |
-| System Monitor | Displays CPU, RAM, disk, uptime, GPU temperature when available, and hardware summary. |
-| Health Guard | Monitors system health rules and produces actionable alerts for low disk space, high resource use, stale projects, and cleanup opportunities. |
-| Automations | Supports safe scheduled reminders and helper actions for cleanup, screenshots, and project rescans. |
-| Command Palette | Provides a global quick action interface for navigation, project actions, health checks, cleanup scans, and workspace commands. |
-| Notifications | Centralizes local app notifications and activity history. |
-| Setup Wizard | Guides first-time configuration for folders, screenshots, VS Code, project roots, and monitoring preferences. |
+| **Daily Dashboard** | Health score, CPU / RAM / disk status, pinned projects, Git reminders, and recent activity in one home view. |
+| **Project Hub** | Scans your project roots, classifies projects by type, detects Git repos, filters and pins, and turns selected projects into a reusable Work Mode. |
+| **Work Modes** | Opens apps, folders, URLs, and shell commands as one repeatable workspace — for coding, study, design, reports, or hardware work. |
+| **Workspace Templates** | Generates starter folders for Web, Python, JS/TS, C/C++, Java, Go, Rust, Arduino, FPGA (Verilog/VHDL), STM32, MATLAB, KiCad, and custom multi-language combos. |
+| **Clean Center** | Reviews temp files, caches, large files, duplicates, downloads, and recycle bin — with conservative safety rules and confirm-before-action. |
+| **Downloads Organizer** | Scans Downloads, previews planned moves, classifies by rules, never overwrites, and keeps a restore option. |
+| **Screenshot Organizer** | Groups screenshots by date and category using configurable keyword rules. |
+| **System Monitor** | Live CPU / RAM / disk / uptime, CPU & GPU temperatures, trend sparklines, and a tunable Health Guard. |
+| **Command Cheatsheet** | A searchable reference of Git, npm, Python, and per-language build commands — one click to copy, plus your own custom entries. |
+| **Automations** | Safe scheduled reminders and helper actions for cleanup, screenshots, and project rescans. |
+| **Command Palette** | Global quick actions (Ctrl+Shift+P / Ctrl+K) for navigation, project actions, health checks, and cleanup. |
+| **Setup Wizard** | Guided first-run configuration for folders, screenshots, VS Code, project roots, and monitoring. |
 
-## Safety Principles
+---
 
-PC Life Assistant is designed around review-first workflows.
+## 📸 Screens
 
-- File organization actions preview changes before moving files.
-- Cleanup tools distinguish safe review items from destructive actions.
-- Git features inspect repository status and reminders; they do not automatically commit or push.
-- Project scanning only works within folders the user configures.
-- Settings are stored locally for the desktop app.
-- Build artifacts, dependency folders, logs, backups, and private configuration files should stay out of version control.
+### Project Hub — scan, classify, and launch your projects
 
-## Project Hub and Work Modes
+<div align="center">
+  <img src="docs/screenshots/02-project-hub.png" alt="Project Hub" width="90%" />
+  <br/>
+  <sub>Scans configured roots with a depth limit, detects Git repos and project types, shows file counts and last-modified dates, and lets you open VS Code / Terminal / Dev / Git or build a Work Mode from a selection.</sub>
+</div>
 
-Project Hub is the main workspace management area.
+### System Monitor — live resource and temperature view
 
-It can:
+<div align="center">
+  <img src="docs/screenshots/04-system-monitor.png" alt="System Monitor" width="90%" />
+  <br/>
+  <sub>Updates every few seconds: health score, CPU / RAM, CPU & GPU temperatures, uptime, live trend sparklines, and Health Guard thresholds (Quiet / Normal / Strict).</sub>
+</div>
 
-- scan configured roots with a depth limit;
-- detect Git repositories and common project types;
-- show file counts, last modified dates, and development command hints;
-- filter projects by status, type, pinned state, and search text;
-- pin projects to the daily dashboard;
-- open a project folder, VS Code, terminal, dev command, or Git view;
-- select multiple projects and create a new Work Mode from them.
+### Workspace Templates — start any kind of project in seconds
 
-When creating a Work Mode from selected projects, the app can add:
+<div align="center">
+  <img src="docs/screenshots/05-workspace-templates.png" alt="Workspace Templates" width="90%" />
+  <br/>
+  <sub>Pick a single-language template or use Custom Combo to mix languages — each gets its own subfolder. New workspaces open VS Code, the folder, and GitHub by default.</sub>
+</div>
 
-- a VS Code launch entry for each project;
-- project folders;
-- available development commands such as `npm run dev`;
-- a generated mode name that can be edited before saving.
+### Command Cheatsheet — copy-ready commands for every workflow
 
-## Clean Center
+<div align="center">
+  <img src="docs/screenshots/06-command-cheatsheet.png" alt="Command Cheatsheet" width="90%" />
+  <br/>
+  <sub>Searchable Git / GitHub, npm, Python, and compiler commands, each with a short description and a one-click Copy button. Add your own frequently used commands too.</sub>
+</div>
 
-Clean Center provides a structured review surface for cleanup work.
+### Clean Center — conservative, review-first cleanup
 
-It focuses on:
+<div align="center">
+  <img src="docs/screenshots/03-clean-center.png" alt="Clean Center" width="90%" />
+  <br/>
+  <sub>Scans temp / cache / large / duplicate files under safe rules: recently modified files, installers, drivers, Windows Update, and your Downloads / Desktop / Documents are never auto-cleaned. Nothing is removed without explicit confirmation.</sub>
+</div>
 
-- temporary files;
-- app and browser caches where supported;
-- downloads review;
-- large file analysis;
-- duplicate file candidates;
-- recycle bin size;
-- project cleanup suggestions;
-- cleanup history and restore-aware workflows where available.
+---
 
-The app favors clear summaries and confirmation before action, so cleanup remains intentional.
+## 🛡️ Safety Principles
 
-## File and Screenshot Organization
+PC Life Assistant is built around review-first workflows:
 
-Downloads Organizer and Screenshot Organizer are built for low-risk organization:
+- File organization **previews changes before moving** files, and never deletes.
+- Cleanup tools clearly separate **safe review items** from destructive actions, and require confirmation.
+- Git features **inspect status and reminders only** — they never auto-commit or push.
+- Project scanning works **only within folders you configure**.
+- Duplicate filenames are auto-numbered instead of overwritten.
+- All file operations are wrapped in error handling and recorded for review.
 
-- scan first;
-- show a preview;
-- classify files by rules;
-- move files only after confirmation;
-- avoid overwriting existing files;
-- record activity for review.
+---
 
-Screenshot organization supports date-based folders and category rules for common contexts such as code, reports, school work, circuits, and other image groups.
-
-## System Health
-
-The health system combines resource metrics and workflow signals.
-
-It can consider:
-
-- CPU usage;
-- RAM usage;
-- disk free space;
-- uptime;
-- downloads backlog;
-- stale Git work;
-- cleanup recommendations;
-- hardware readings when available.
-
-The dashboard turns these signals into a health score, cards, alerts, and suggested actions.
-
-## Architecture
+## 🧱 Architecture
 
 ```text
 pc-life-assistant/
-  electron/
-    main.js                 Electron main process and IPC handlers
-    preload.js              Safe renderer bridge
-    services/               Local system, project, cleanup, settings, and automation services
-  src/
-    App.jsx                 App routing and layout composition
-    main.jsx                React entry point
-    components/             Reusable UI components
-    layout/                 App shell, sidebar, and topbar
-    pages/                  Main app screens
-    styles/                 Global styles and theme variables
-    theme/                  Theme provider
-    utils/                  Formatting and helper utilities
+  electron/                 # Main process
+    main.js                 #   Window, tray, and IPC handlers
+    preload.js              #   Secure renderer bridge (window.api)
+    services/               #   System, project, cleanup, settings & automation services
+  src/                      # React renderer
+    App.jsx                 #   App routing and layout composition
+    main.jsx                #   React entry point
+    pages/                  #   Main app screens
+    components/             #   Reusable UI components
+    layout/                 #   App shell, sidebar, topbar
+    theme/                  #   Theme provider
+    styles/                 #   Global styles and design tokens
+    utils/                  #   Formatting helpers
   config/
-    user-settings.json      Default local app settings template
+    user-settings.json      # Default local settings template
   scripts/
-    clean-dist.js           Build cleanup helper
-    generate-icons.js       Icon generation helper
+    clean-dist.js           # Build cleanup helper
+    generate-icons.js       # Icon generation helper
   package.json
   vite.config.mjs
 ```
 
-## Main Screens
+**Tech stack:** Electron 42 · React 18 · Vite 6 · Node.js · plain JavaScript · packaged with electron-builder (NSIS installer).
+
+---
+
+## 🗂️ Main Screens
 
 | Screen | Purpose |
 | --- | --- |
 | Dashboard | Daily status, quick actions, pinned projects, and health overview. |
-| Project Hub | Project scanning, search, filters, Git state, pinning, and work mode creation. |
+| Project Hub | Project scanning, search, filters, Git state, pinning, and Work Mode creation. |
 | Work Modes | Create, edit, duplicate, and launch repeatable workspaces. |
 | Workspace Templates | Generate starter folder structures for common project types. |
-| File Organizer | Preview and organize downloads or selected folders. |
+| File Organizer | Preview and organize downloads or a selected folder. |
 | Screenshots | Scan and organize screenshot images by date and category. |
 | Clean Center | Review cleanup candidates and safe maintenance suggestions. |
 | Automations | Configure scheduled reminders and safe helper actions. |
 | System Monitor | Inspect live hardware and resource status. |
 | Health Monitor | Review health checks, recommendations, and guard settings. |
+| Command Cheatsheet | Copy-ready Git / npm / Python / build commands. |
 | Notification Center | Review app notifications and related actions. |
 | Activity History | Review recent organize, cleanup, and notification activity. |
-| Settings | Manage paths, appearance, health guard, cleanup behavior, and app preferences. |
+| Settings | Manage paths, appearance, health guard, cleanup behavior, and preferences. |
 | Setup Wizard | Guided first-run setup for important folders and tools. |
 
-## Requirements
+---
 
-- Windows 10 or later is recommended.
+## 📦 Requirements
+
+- Windows 10 or later (Windows 11 recommended).
 - Node.js 18 or later.
 - npm.
 - VS Code is optional but recommended for project launching features.
 
-## Development
+---
 
-Install dependencies:
+## 🛠️ Development
 
 ```bash
+# Install dependencies
 npm install
-```
 
-Run the desktop app in development mode:
-
-```bash
+# Run the desktop app in development (Vite + Electron)
 npm run dev
-```
 
-Build the renderer:
-
-```bash
+# Build the React renderer
 npm run build
-```
 
-Create a Windows installer:
-
-```bash
+# Create a Windows installer (NSIS .exe)
 npm run package
-```
 
-Create an unpacked build for local inspection:
-
-```bash
+# Create an unpacked build for local inspection
 npm run package:dir
 ```
 
-## Scripts
+### Scripts
 
 | Script | Purpose |
 | --- | --- |
@@ -205,58 +205,44 @@ npm run package:dir
 | `npm run gen:icons` | Generates app icon assets. |
 | `npm run package` | Builds and packages the Windows installer. |
 | `npm run package:dir` | Builds an unpacked Windows app directory. |
-| `npm run release:github` | Builds and publishes a release through the configured release provider. |
+| `npm run release:github` | Builds and publishes a GitHub release. |
 
-## Configuration
+---
 
-The app uses a local JSON settings file for preferences such as:
+## ⚙️ Configuration
 
-- monitored folders;
-- project roots;
-- work modes;
+The app stores preferences in a local JSON settings file:
+
+- monitored folders and project roots;
+- work modes and workspace templates;
 - screenshot organization rules;
-- cleanup behavior;
+- cleanup behavior and health-guard thresholds;
 - theme and compact mode;
-- notification preferences;
-- automation rules.
+- notification and automation preferences.
 
-Do not commit private local configuration or generated build output. Keep repository commits limited to source code, templates, documentation, and safe example data.
+In development, settings live in `config/user-settings.json`. In a packaged build, they live in `%APPDATA%\PC Life Assistant\user-settings.json`.
 
-## Privacy and Local Data
+---
 
-PC Life Assistant is a local desktop utility. Its core features are designed to operate on local folders and local system information selected or configured by the user.
+## 🔐 Privacy & Local Data
 
-Public documentation and commits should not include:
+PC Life Assistant is a **local desktop utility**. Its features operate on local folders and local system information that you select or configure. Nothing is sent to a server.
 
-- personal machine paths;
-- private project names;
-- credentials;
-- sensitive private values;
-- private service endpoints;
-- generated installers or unpacked builds;
-- dependency folders;
-- logs or backup folders.
+Public documentation and commits should not include personal machine paths, private project names, credentials, private endpoints, generated installers, dependency folders, or logs/backups.
 
-## Development Notes
+---
 
-- Electron main-process services are grouped by domain under `electron/services`.
-- Renderer pages live under `src/pages`.
-- Shared UI elements live under `src/components`.
-- Work mode launching is handled by the mode service.
-- Project detection, templates, and Project Hub actions are handled by the project service.
-- Cleanup, downloads, and screenshot organization are implemented as review-first workflows.
-- Global command palette actions are composed from local UI commands and backend-generated project/mode commands.
-
-## Roadmap Ideas
+## 🗺️ Roadmap Ideas
 
 - More built-in workspace templates.
-- Richer health score history charts.
+- Richer health-score history charts.
 - More project language detectors.
 - Improved restore history for all file operations.
 - More automation triggers with explicit review controls.
 - Optional export/import for settings.
-- More detailed release notes and update flow.
 
-## License
+---
 
-MIT
+## 📄 License
+
+[MIT](LICENSE) © [jeremywu0420](https://github.com/jeremywu0420)
