@@ -22,6 +22,9 @@ const updateService = require('./services/updateService');
 const cleanupService = require('./services/cleanupService');
 const activityHistoryService = require('./services/activityHistoryService');
 const healthGuardService = require('./services/healthGuardService');
+const toolchainService = require('./services/toolchainService');
+const buildService = require('./services/buildService');
+const serialService = require('./services/serialService');
 
 const isDev = !app.isPackaged;
 
@@ -507,6 +510,23 @@ function registerIpc() {
     const config = loadConfig();
     return gitService.checkAll(config.projects);
   });
+
+  ipcMain.handle('toolchain:check', async () => toolchainService.checkAll());
+
+  // Build (compile/simulate detected EE projects) — streams output to the renderer.
+  const sendToRenderer = (channel, payload) => {
+    if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send(channel, payload);
+  };
+  ipcMain.handle('build:detect', async (_event, folderPath) => buildService.detectBuild(folderPath));
+  ipcMain.handle('build:run', async (_event, folderPath) =>
+    buildService.runBuild(folderPath, (chunk) => sendToRenderer('app:build-output', chunk)));
+  ipcMain.handle('build:cancel', async () => buildService.cancelBuild());
+
+  // Serial Monitor — list ports and stream incoming data.
+  ipcMain.handle('serial:listPorts', async () => serialService.listPorts());
+  ipcMain.handle('serial:open', async (_event, payload = {}) =>
+    serialService.openPort(payload, (chunk) => sendToRenderer('app:serial-data', chunk)));
+  ipcMain.handle('serial:close', async () => serialService.closePort());
 
   ipcMain.handle('settings:get', async () => settingsService.getSettings());
 

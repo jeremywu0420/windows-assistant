@@ -27,6 +27,9 @@ export const NAV_SECTIONS = [
       { key: 'workspaceTemplates', label: '工作區模板', icon: 'WT' },
       { key: 'modes', label: '工作模式', icon: 'MO' },
       { key: 'cheatsheet', label: '指令大全', icon: 'CS' },
+      { key: 'toolchain', label: '環境健檢', icon: 'TC' },
+      { key: 'eeTools', label: 'EE 工具', icon: 'EE' },
+      { key: 'embedded', label: '嵌入式工具', icon: 'EB' },
     ],
   },
   {

@@ -81,6 +81,19 @@ contextBridge.exposeInMainWorld('api', {
   // Git
   checkGit: () => ipcRenderer.invoke('git:check'),
 
+  // Toolchain Doctor
+  checkToolchains: () => ipcRenderer.invoke('toolchain:check'),
+
+  // Build (compile / simulate)
+  detectBuild: (folderPath) => ipcRenderer.invoke('build:detect', folderPath),
+  runBuild: (folderPath) => ipcRenderer.invoke('build:run', folderPath),
+  cancelBuild: () => ipcRenderer.invoke('build:cancel'),
+
+  // Serial Monitor
+  listSerialPorts: () => ipcRenderer.invoke('serial:listPorts'),
+  openSerial: (payload) => ipcRenderer.invoke('serial:open', payload),
+  closeSerial: () => ipcRenderer.invoke('serial:close'),
+
   // Project Hub
   listProjects: () => ipcRenderer.invoke('project:list'),
   runProjectAction: (payload) => ipcRenderer.invoke('project:action', payload),
@@ -163,6 +176,16 @@ contextBridge.exposeInMainWorld('api', {
     const handler = (_event, info) => callback(info);
     ipcRenderer.on('app:file-event', handler);
     return () => ipcRenderer.removeListener('app:file-event', handler);
+  },
+  onBuildOutput: (callback) => {
+    const handler = (_event, info) => callback(info);
+    ipcRenderer.on('app:build-output', handler);
+    return () => ipcRenderer.removeListener('app:build-output', handler);
+  },
+  onSerialData: (callback) => {
+    const handler = (_event, info) => callback(info);
+    ipcRenderer.on('app:serial-data', handler);
+    return () => ipcRenderer.removeListener('app:serial-data', handler);
   },
   onMonitoringChanged: (callback) => {
     const handler = (_event, info) => callback(info);

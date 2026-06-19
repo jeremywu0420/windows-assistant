@@ -19,6 +19,9 @@ import WorkspaceTemplates from './pages/WorkspaceTemplates.jsx';
 import NotificationCenter from './pages/NotificationCenter.jsx';
 import ActivityHistory from './pages/ActivityHistory.jsx';
 import CommandCheatsheet from './pages/CommandCheatsheet.jsx';
+import ToolchainDoctor from './pages/ToolchainDoctor.jsx';
+import EETools from './pages/EETools.jsx';
+import EmbeddedLab from './pages/EmbeddedLab.jsx';
 
 function Shell() {
   const [page, setPage] = useState('dashboard');
@@ -76,6 +79,9 @@ function Shell() {
       case 'setup': return <SetupWizard onNavigate={navigate} />;
       case 'workspaceTemplates': return <WorkspaceTemplates onNavigate={navigate} />;
       case 'cheatsheet': return <CommandCheatsheet />;
+      case 'toolchain': return <ToolchainDoctor />;
+      case 'eeTools': return <EETools />;
+      case 'embedded': return <EmbeddedLab />;
       case 'automations': return <Automations />;
       case 'monitor': return <SystemMonitor onNavigate={navigate} />;
       case 'screenshots': return <Screenshots />;
