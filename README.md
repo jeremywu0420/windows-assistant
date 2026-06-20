@@ -51,8 +51,8 @@ The goal is not to be another todo list — it's to **remove the small repeated 
 | **System Monitor** | Live CPU / RAM / disk / uptime, CPU & GPU temperatures, trend sparklines, and a tunable Health Guard. |
 | **Command Cheatsheet** | A searchable reference of Git, npm, Python, and per-language build commands — one click to copy, plus your own custom entries. |
 | **Toolchain Doctor** | Detects whether dev/EE toolchains (Arduino CLI, Icarus Verilog, GHDL, ARM GCC, OpenOCD, CMake, Ninja, Octave, KiCad CLI, Node, Git, Python) are installed, with version, resolved PATH, and a one-click install hint. |
-| **EE Quick Tools** | Built-in calculators for electrical engineering: Ohm's law, voltage divider, resistor colour-code, RC/RL/LC, series/parallel, and base conversion — all engineering-notation aware. |
-| **Embedded Lab** | Detects and compiles/simulates Arduino, Verilog, VHDL, Octave, and CMake projects with streamed build output, plus a read-only serial monitor (COM port list + live data). |
+| **EE Quick Tools** | Built-in calculators for electrical engineering: Ohm's law, voltage divider, bidirectional resistor colour-code (colours ⇄ value), RC/RL/LC, series/parallel, and base conversion — all engineering-notation aware. |
+| **Embedded Lab** | Detects and compiles/simulates Arduino, Verilog, VHDL, Octave, and CMake projects with streamed build output, one-click flash to an Arduino board (with confirmation), plus a read-only serial monitor (COM port list + live data). |
 | **Automations** | Safe scheduled reminders and helper actions for cleanup, screenshots, and project rescans. |
 | **Command Palette** | Global quick actions (Ctrl+Shift+P / Ctrl+K) for navigation, project actions, health checks, and cleanup. |
 | **Setup Wizard** | Guided first-run configuration for folders, screenshots, VS Code, project roots, and monitoring. |
@@ -163,8 +163,8 @@ pc-life-assistant/
 | Health Monitor | Review health checks, recommendations, and guard settings. |
 | Command Cheatsheet | Copy-ready Git / npm / Python / build commands. |
 | Toolchain Doctor | Detect installed dev/EE toolchains, versions, and PATH, with install hints. |
-| EE Quick Tools | Electrical-engineering calculators (Ohm's law, dividers, colour code, RC/LC, base conversion). |
-| Embedded Lab | Compile/simulate Arduino/Verilog/VHDL/Octave/CMake projects and monitor a serial port. |
+| EE Quick Tools | Electrical-engineering calculators (Ohm's law, dividers, bidirectional resistor colour code, RC/LC, base conversion). |
+| Embedded Lab | Compile/simulate Arduino/Verilog/VHDL/Octave/CMake projects, one-click flash to Arduino, and monitor a serial port. |
 | Notification Center | Review app notifications and related actions. |
 | Activity History | Review recent organize, cleanup, and notification activity. |
 | Settings | Manage paths, appearance, health guard, cleanup behavior, and preferences. |

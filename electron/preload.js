@@ -87,6 +87,7 @@ contextBridge.exposeInMainWorld('api', {
   // Build (compile / simulate)
   detectBuild: (folderPath) => ipcRenderer.invoke('build:detect', folderPath),
   runBuild: (folderPath) => ipcRenderer.invoke('build:run', folderPath),
+  flashBuild: (payload) => ipcRenderer.invoke('build:flash', payload),
   cancelBuild: () => ipcRenderer.invoke('build:cancel'),
 
   // Serial Monitor

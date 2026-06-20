@@ -3,6 +3,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import SectionPanel from '../components/SectionPanel.jsx';
 import Button from '../components/Button.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
+import ConfirmDangerDialog from '../components/ConfirmDangerDialog.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 const BAUDS = [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 250000];
@@ -42,6 +43,8 @@ export default function EmbeddedLab() {
   const [folder, setFolder] = useState('');
   const [detected, setDetected] = useState(null);
   const [building, setBuilding] = useState(false);
+  const [flashing, setFlashing] = useState(false);
+  const [confirmFlash, setConfirmFlash] = useState(false);
   const [buildLines, setBuildLines] = useState([]);
 
   // --- Serial ---
@@ -91,6 +94,22 @@ export default function EmbeddedLab() {
 
   const cancelBuild = async () => { await window.api.cancelBuild(); setBuilding(false); };
 
+  const isArduino = detected?.type === 'arduino';
+  const canFlash = isArduino && !!port && !building && !flashing && !connected;
+
+  const doFlash = async () => {
+    setConfirmFlash(false);
+    setFlashing(true);
+    setBuildLines([]);
+    try {
+      const r = await window.api.flashBuild({ folderPath: folder, port });
+      if (r?.ok) toast('燒錄完成', 'ok');
+      else toast(r?.error || '燒錄失敗', 'error');
+    } finally {
+      setFlashing(false);
+    }
+  };
+
   const refreshPorts = async () => {
     const r = await window.api?.listSerialPorts?.();
     const list = r?.ports || [];
@@ -119,13 +138,22 @@ export default function EmbeddedLab() {
       <SectionPanel
         title="編譯 / 模擬"
         eyebrow="BUILD"
-        description="選擇專案資料夾，自動偵測類型並編譯。僅進行編譯／模擬，不會燒錄到裝置。"
+        description="選擇專案資料夾，自動偵測類型並編譯／模擬。Arduino 專案可一鍵燒錄（需先在下方序列埠選擇 COM 並保持未連線）。"
         actions={(
           <div style={{ display: 'flex', gap: 8 }}>
             <Button onClick={pickFolder}>選擇資料夾</Button>
             {building
               ? <Button variant="danger" onClick={cancelBuild}>取消</Button>
               : <Button variant="primary" onClick={build} disabled={!folder || !detected?.supported}>編譯</Button>}
+            {isArduino ? (
+              <Button
+                variant="danger"
+                onClick={() => setConfirmFlash(true)}
+                disabled={!canFlash}
+                busy={flashing}
+                title={connected ? '請先關閉序列埠連線' : !port ? '請在下方序列埠選擇 COM' : '編譯並燒錄到裝置'}
+              >燒錄</Button>
+            ) : null}
           </div>
         )}
       >
@@ -168,6 +196,15 @@ export default function EmbeddedLab() {
         </div>
         <Console lines={serialLines} />
       </SectionPanel>
+
+      <ConfirmDangerDialog
+        open={confirmFlash}
+        title="確認燒錄到裝置"
+        message={`即將編譯並把「${folder}」燒錄到 ${port}。此動作會寫入實體裝置，確定要繼續嗎？`}
+        confirmLabel="開始燒錄"
+        onConfirm={doFlash}
+        onCancel={() => setConfirmFlash(false)}
+      />
     </div>
   );
 }

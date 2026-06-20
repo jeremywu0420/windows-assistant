@@ -141,6 +141,31 @@ export function decodeResistorColors(bands) {
   return { ohms, tolerance: tol && tol.tol != null ? tol.tol : null };
 }
 
+// Inverse: ohms -> colour band names. bandCount 4 (2 sig digits) or 5 (3 sig).
+// Returns { bands, value, exact } or null. `bands` are digit+multiplier names
+// (tolerance is chosen separately); `value` is what those bands decode back to.
+export function encodeResistorValue(ohms, bandCount = 4) {
+  if (!Number.isFinite(ohms) || ohms <= 0) return null;
+  const sig = bandCount === 5 ? 3 : 2;
+  let exp = Math.floor(Math.log10(ohms)) - (sig - 1);
+  let d = Math.round(ohms / Math.pow(10, exp));
+  if (d >= Math.pow(10, sig)) { d = Math.round(d / 10); exp += 1; } // rounding carry
+  if (d < Math.pow(10, sig - 1)) { d *= 10; exp -= 1; } // keep leading digit non-zero
+  // Multiplier band must be one of the available colours (10^-2 .. 10^9).
+  const mult = RESISTOR_COLORS.find((c) => c.mult != null && Math.abs(c.mult - Math.pow(10, exp)) < 1e-15);
+  if (!mult) return null;
+  const digitStr = String(d).padStart(sig, '0');
+  const bands = [];
+  for (const ch of digitStr) {
+    const c = RESISTOR_COLORS.find((x) => x.digit === Number(ch));
+    if (!c) return null;
+    bands.push(c.name);
+  }
+  bands.push(mult.name);
+  const value = d * Math.pow(10, exp);
+  return { bands, value, exact: Math.abs(value - ohms) < 1e-9 };
+}
+
 // ---- Base conversion ------------------------------------------------------
 
 // Parse an integer string in a given base; returns NaN if invalid.

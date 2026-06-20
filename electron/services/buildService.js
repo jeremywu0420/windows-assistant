@@ -136,6 +136,31 @@ async function runBuild(folderPath, onData) {
   return { ok: true };
 }
 
+// One-click flash — compiles and uploads to a connected board. This DOES write
+// to hardware, so the renderer gates it behind an explicit confirm dialog.
+// Currently supports Arduino (arduino-cli upload); other types are no-ops.
+async function flash(folderPath, port, onData) {
+  if (activeProc) return { ok: false, error: '已有工作正在執行中' };
+  const plan = detectBuild(folderPath);
+  if (plan.type !== 'arduino') {
+    onData({ stream: 'system', text: '一鍵燒錄目前僅支援 Arduino 專案（.ino）' });
+    return { ok: false, error: '僅支援 Arduino 專案' };
+  }
+  if (!/^COM\d+$/i.test(String(port || ''))) {
+    onData({ stream: 'system', text: '無效的連接埠（需為 COMx）' });
+    return { ok: false, error: '無效的連接埠' };
+  }
+  onData({ stream: 'system', text: `燒錄到 ${port}…` });
+  const step = {
+    cmd: 'arduino-cli',
+    args: ['upload', '-p', port, '--fqbn', 'arduino:avr:uno', folderPath],
+    cwd: folderPath,
+  };
+  const r = await runStep(step, onData);
+  onData({ stream: 'system', text: r.ok ? '✓ 燒錄完成' : `✗ 燒錄失敗（exit ${r.code}）` });
+  return r;
+}
+
 function cancelBuild() {
   if (activeProc) {
     try { activeProc.kill(); } catch (_) { /* ignore */ }
@@ -145,4 +170,4 @@ function cancelBuild() {
   return { ok: false, error: '沒有正在執行的編譯' };
 }
 
-module.exports = { detectBuild, runBuild, cancelBuild };
+module.exports = { detectBuild, runBuild, flash, cancelBuild };

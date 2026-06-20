@@ -520,6 +520,8 @@ function registerIpc() {
   ipcMain.handle('build:detect', async (_event, folderPath) => buildService.detectBuild(folderPath));
   ipcMain.handle('build:run', async (_event, folderPath) =>
     buildService.runBuild(folderPath, (chunk) => sendToRenderer('app:build-output', chunk)));
+  ipcMain.handle('build:flash', async (_event, payload = {}) =>
+    buildService.flash(payload.folderPath, payload.port, (chunk) => sendToRenderer('app:build-output', chunk)));
   ipcMain.handle('build:cancel', async () => buildService.cancelBuild());
 
   // Serial Monitor — list ports and stream incoming data.

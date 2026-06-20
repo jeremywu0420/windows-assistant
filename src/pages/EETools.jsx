@@ -3,7 +3,7 @@ import PageHeader from '../components/PageHeader.jsx';
 import Card from '../components/Card.jsx';
 import {
   ohmsLaw, voltageDivider, rcFilter, rlFilter, lcResonance,
-  combineResistors, combineCapacitors, decodeResistorColors,
+  combineResistors, combineCapacitors, decodeResistorColors, encodeResistorValue,
   formatEng, parseEng, RESISTOR_COLORS, parseInBase, toBases,
 } from '../utils/eeMath.js';
 
@@ -109,13 +109,13 @@ function ColorSelect({ label, options, value, onChange }) {
   );
 }
 
-function ResistorColorCode() {
+function DecodeMode() {
   const [bands, setBands] = useState(['brown', 'black', 'red', 'gold']);
   const set = (idx, v) => { const next = [...bands]; next[idx] = v; setBands(next); };
   const { ohms, tolerance } = decodeResistorColors(bands);
   const swatches = bands.map((n) => RESISTOR_COLORS.find((c) => c.name === n));
   return (
-    <Card title="電阻色碼（4 環）" icon="🎨">
+    <>
       <div style={{ marginBottom: 10 }}>
         {swatches.map((c, idx) => <Swatch key={idx} css={c?.css || '#888'} />)}
       </div>
@@ -133,6 +133,61 @@ function ResistorColorCode() {
           {tolerance != null ? <span className="muted"> ± {tolerance}%</span> : null}
         </div>
       ) : null}
+    </>
+  );
+}
+
+function EncodeMode() {
+  const [text, setText] = useState('4.7k');
+  const [count, setCount] = useState(4);
+  const ohms = parseEng(text);
+  const enc = encodeResistorValue(ohms, count);
+  return (
+    <>
+      <Row>
+        <Field label="阻值 (Ω)" value={text} onChange={setText} placeholder="例 4.7k" />
+        <label style={{ display: 'block' }}>
+          <span style={labelStyle}>環數</span>
+          <select style={inputStyle} value={count} onChange={(e) => setCount(Number(e.target.value))}>
+            <option value={4}>4 環</option>
+            <option value={5}>5 環</option>
+          </select>
+        </label>
+      </Row>
+      {enc ? (
+        <div>
+          <div style={{ marginBottom: 8 }}>
+            {enc.bands.map((n, idx) => {
+              const c = RESISTOR_COLORS.find((x) => x.name === n);
+              return <Swatch key={idx} css={c?.css || '#888'} />;
+            })}
+          </div>
+          <div style={{ lineHeight: 1.9 }}>
+            {enc.bands.map((n, idx) => {
+              const c = RESISTOR_COLORS.find((x) => x.name === n);
+              const role = idx < enc.bands.length - 1 ? `第 ${idx + 1} 位` : '倍率';
+              return <div key={idx}><span className="muted" style={{ fontSize: 12 }}>{role}：</span> <strong>{c?.label} {n}</strong></div>;
+            })}
+          </div>
+          <div style={{ marginTop: 6 }} className="muted">
+            回推值 = <span style={outStyle}>{formatEng(enc.value, 'Ω')}</span>
+            {enc.exact ? '（精確）' : '（最接近的標準色碼）'}
+          </div>
+        </div>
+      ) : <p className="muted" style={{ fontSize: 12 }}>輸入一個有效阻值（例 4.7k）。</p>}
+    </>
+  );
+}
+
+function ResistorColorCode() {
+  const [mode, setMode] = useState('decode');
+  return (
+    <Card title="電阻色碼" icon="🎨">
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+        <button type="button" className={`filter-chip ${mode === 'decode' ? 'active' : ''}`} onClick={() => setMode('decode')}>色碼 → 阻值</button>
+        <button type="button" className={`filter-chip ${mode === 'encode' ? 'active' : ''}`} onClick={() => setMode('encode')}>阻值 → 色碼</button>
+      </div>
+      {mode === 'decode' ? <DecodeMode /> : <EncodeMode />}
     </Card>
   );
 }
