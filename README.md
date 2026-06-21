@@ -16,24 +16,24 @@ One place to launch projects, organize files, monitor system health, and keep da
 </div>
 
 <div align="center">
-  <img src="docs/screenshots/01-dashboard.png" alt="PC Life Assistant — Daily Dashboard" width="90%" />
+  <img src="docs/screenshots/01-dashboard.png" alt="PC Life Assistant — NEXUS Dashboard" width="90%" />
   <br/>
-  <sub><b>Daily Dashboard</b> · PC health score, live CPU / RAM / disk / temperature, pinned projects, Git reminders, and one-click actions.</sub>
+  <sub><b>Dashboard</b> · An interactive 3D live-nodes globe surrounded by key metrics — PC health score, live system overview (CPU / RAM / disk / network), cleanup state, and recent activity.</sub>
 </div>
 
 ---
 
 ## ✨ Overview
 
-PC Life Assistant combines a daily workspace dashboard, project launcher, file organizer, system health monitor, automation rules, and safe cleanup tools into a single Electron app.
+PC Life Assistant combines a daily workspace dashboard, project launcher, file organizer, system health monitor, automation rules, safe cleanup tools, a Windows Security overview, and a gaming-style performance overlay into a single Electron app. The interface is branded **NEXUS** in-app and is fully **bilingual (English / 繁體中文)** with a language switch in Settings.
 
 The goal is not to be another todo list — it's to **remove the small repeated steps** around everyday computer work: opening the same folders and tools, sorting the Downloads folder, keeping an eye on disk space and temperatures, and remembering which projects still need a Git commit.
 
-- 🔒 **Review-first & safe by design** — file actions preview before moving, never auto-delete, and Git features are read-only.
+- 🔒 **Review-first & safe by design** — file actions preview before moving, never auto-delete, and Git & Security features are read-only.
 - 🧩 **No account, no cloud, no database** — every setting lives in a local JSON file.
 - 🛡️ **No admin rights required** — works entirely within the folders you configure.
 
-> The screenshots in this README are captured from the live app. The interface ships in Traditional Chinese; English captions are provided under each image.
+> The screenshots in this README are captured from the live app. The interface ships **bilingual (English / Traditional Chinese)** with an in-app language switch in Settings; the captures below show the Traditional Chinese interface, with English captions under each image.
 
 ---
 
@@ -41,7 +41,7 @@ The goal is not to be another todo list — it's to **remove the small repeated 
 
 | Area | What it does |
 | --- | --- |
-| **Daily Dashboard** | Health score, CPU / RAM / disk status, pinned projects, Git reminders, and recent activity in one home view. |
+| **Dashboard** | Redesigned home view with an interactive 3D "live nodes" globe (Three.js), health score, live system overview (CPU / RAM / disk / network), cleanup state, and recent activity. |
 | **Project Hub** | Scans your project roots, classifies projects by type, detects Git repos, filters and pins, and turns selected projects into a reusable Work Mode. |
 | **Work Modes** | Opens apps, folders, URLs, and shell commands as one repeatable workspace — for coding, study, design, reports, or hardware work. |
 | **Workspace Templates** | Generates starter folders for Web, Python, JS/TS, C/C++, Java, Go, Rust, Arduino, FPGA (Verilog/VHDL), STM32, MATLAB, KiCad, and custom multi-language combos. |
@@ -55,6 +55,8 @@ The goal is not to be another todo list — it's to **remove the small repeated 
 | **Embedded Lab** | Detects and compiles/simulates Arduino, Verilog, VHDL, Octave, and CMake projects with streamed build output, one-click flash to an Arduino board (with confirmation), plus a read-only serial monitor (COM port list + live data). |
 | **Automations** | Safe scheduled reminders and helper actions for cleanup, screenshots, and project rescans. |
 | **Command Palette** | Global quick actions (Ctrl+Shift+P / Ctrl+K) for navigation, project actions, health checks, and cleanup. |
+| **Security Center** | Read-only overview of Windows Security — Microsoft Defender, Firewall, account protection, app & browser control, device security (TPM / Secure Boot / BitLocker / Memory Integrity), and protection history — with one-click Quick Scan, signature update, and shortcuts to Windows settings. |
+| **System Overlay** | Optional always-on-top performance HUD (RTSS / Afterburner style) showing FPS and 1% low, CPU usage / power / temperature / clock, GPU usage / temperature / VRAM, and RAM — toggleable from the tray, with click-through. |
 | **Setup Wizard** | Guided first-run configuration for folders, screenshots, VS Code, project roots, and monitoring. |
 
 ---
@@ -106,7 +108,7 @@ The goal is not to be another todo list — it's to **remove the small repeated 
 <div align="center">
   <img src="docs/screenshots/08-ee-tools.png" alt="EE Quick Tools" width="90%" />
   <br/>
-  <sub>Ohm's law, voltage divider, RC/RL/LC, series/parallel, and base conversion — all engineering-notation aware. The resistor card works both ways: colours → value, or a value → the colour bands (here 4.7 kΩ → yellow-violet-red).</sub>
+  <sub>Ohm's law, voltage divider, RC/RL/LC, series/parallel, and base conversion — all engineering-notation aware. The resistor card works both ways: colours → value, or a value → the colour bands (here 1 kΩ → brown-black-red).</sub>
 </div>
 
 ### Embedded Lab — build, one-click flash, and serial monitor
@@ -126,6 +128,7 @@ PC Life Assistant is built around review-first workflows:
 - File organization **previews changes before moving** files, and never deletes.
 - Cleanup tools clearly separate **safe review items** from destructive actions, and require confirmation.
 - Git features **inspect status and reminders only** — they never auto-commit or push.
+- Security Center is **read-only** — it reports Windows Security status and only runs standard Microsoft Defender actions (Quick Scan, signature update) that you start yourself.
 - Project scanning works **only within folders you configure**.
 - Duplicate filenames are auto-numbered instead of overwritten.
 - All file operations are wrapped in error handling and recorded for review.
@@ -139,12 +142,15 @@ pc-life-assistant/
   electron/                 # Main process
     main.js                 #   Window, tray, and IPC handlers
     preload.js              #   Secure renderer bridge (window.api)
-    services/               #   System, project, cleanup, settings & automation services
+    services/               #   System, project, cleanup, settings, automation, security & overlay services
   src/                      # React renderer
     App.jsx                 #   App routing and layout composition
     main.jsx                #   React entry point
+    i18n.jsx                #   Bilingual (en / zh) string resources and provider
+    overlay/                #   Transparent always-on-top performance HUD
+    services/               #   Renderer-side data helpers (dashboard, security)
     pages/                  #   Main app screens
-    components/             #   Reusable UI components
+    components/             #   Reusable UI components (incl. dashboard widgets)
     layout/                 #   App shell, sidebar, topbar
     theme/                  #   Theme provider
     styles/                 #   Global styles and design tokens
@@ -159,7 +165,7 @@ pc-life-assistant/
   vite.config.mjs
 ```
 
-**Tech stack:** Electron 42 · React 18 · Vite 6 · Node.js · plain JavaScript · packaged with electron-builder (NSIS installer).
+**Tech stack:** Electron 42 · React 18 · Vite 6 · Node.js · primarily JavaScript (with a TypeScript Security Center module) · Three.js for the dashboard globe · bilingual i18n (en / zh) · packaged with electron-builder (NSIS installer).
 
 ---
 
@@ -167,7 +173,7 @@ pc-life-assistant/
 
 | Screen | Purpose |
 | --- | --- |
-| Dashboard | Daily status, quick actions, pinned projects, and health overview. |
+| Dashboard | Redesigned daily status with a 3D live-nodes globe, quick actions, pinned projects, and health overview. |
 | Project Hub | Project scanning, search, filters, Git state, pinning, and Work Mode creation. |
 | Work Modes | Create, edit, duplicate, and launch repeatable workspaces. |
 | Workspace Templates | Generate starter folder structures for common project types. |
@@ -185,6 +191,8 @@ pc-life-assistant/
 | Activity History | Review recent organize, cleanup, and notification activity. |
 | Settings | Manage paths, appearance, health guard, cleanup behavior, and preferences. |
 | Setup Wizard | Guided first-run setup for important folders and tools. |
+| Security Center | Read-only Windows Security overview with Quick Scan, signature update, and settings shortcuts. |
+| System Overlay | Always-on-top FPS / CPU / GPU / RAM performance HUD. |
 
 ---
 
@@ -194,6 +202,7 @@ pc-life-assistant/
 - Node.js 18 or later.
 - npm.
 - VS Code is optional but recommended for project launching features.
+- Optional, for the System Overlay only: Intel PresentMon or NVIDIA FrameView for the in-game FPS counter, and an NVIDIA GPU with `nvidia-smi` for GPU usage / VRAM. The overlay degrades gracefully and shows "N/A" when these are unavailable.
 
 ---
 
