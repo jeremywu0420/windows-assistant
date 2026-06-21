@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import Toggle from '../components/Toggle.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useTheme } from '../theme/ThemeProvider.jsx';
+import { useLocale } from '../i18n.jsx';
 
 const inputStyle = {
   background: 'var(--input-bg)',
@@ -25,6 +26,7 @@ const CATEGORIES = [
   { key: 'paths', label: '路徑', icon: 'PA' },
   { key: 'startup', label: '開機/喚醒', icon: 'ST' },
   { key: 'guard', label: '監控守護', icon: 'HG' },
+  { key: 'overlay', label: 'Overlay', icon: 'OS' },
   { key: 'cleanup', label: '清理', icon: 'CC' },
   { key: 'automation', label: '自動化', icon: 'AU' },
   { key: 'backup', label: '備份/還原', icon: 'BK' },
@@ -47,6 +49,7 @@ function Row({ label, desc, children }) {
 export default function Settings() {
   const { toast } = useToast();
   const { theme, setTheme, accent, setAccent, compact, setCompact } = useTheme();
+  const { language, setLanguage, t } = useLocale();
   const [category, setCategory] = useState('general');
   const [settings, setSettings] = useState(null);
   const [autoLaunchSupported, setAutoLaunchSupported] = useState(true);
@@ -56,6 +59,7 @@ export default function Settings() {
   const general = settings?.general || {};
   const guard = settings?.healthGuard || {};
   const cleanup = settings?.cleanup || {};
+  const overlay = settings?.overlay || {};
 
   const load = async () => {
     const result = await window.api.getSettings();
@@ -96,6 +100,19 @@ export default function Settings() {
     setSettings(next);
     const result = await window.api.saveHealthGuard(nextGuard);
     toast(result.ok ? '健康守護設定已更新' : result.error || '儲存失敗', result.ok ? 'ok' : 'error');
+  };
+
+  const saveOverlay = async (patch) => {
+    const nextOverlay = { ...overlay, ...patch };
+    const next = { ...settings, overlay: nextOverlay };
+    setSettings(next);
+    if (window.api.overlay?.saveSettings) {
+      const result = await window.api.overlay.saveSettings(patch);
+      if (result?.settings) setSettings({ ...next, overlay: result.settings });
+      if (!result?.ok) toast(result?.error || 'Overlay 設定儲存失敗', 'error');
+      return result;
+    }
+    return saveAll(next);
   };
 
   const toggleAutoLaunch = async (enabled) => {
@@ -170,6 +187,16 @@ export default function Settings() {
             <Card title="一般">
               <Row label="桌面通知" desc="用於健康守護、自動化、清理建議與更新提醒。">
                 <Toggle checked={general.notifications !== false} onChange={(enabled) => saveGeneral({ notifications: enabled })} />
+              </Row>
+              <Row label={t('settings.languageLabel')} desc={t('settings.languageDesc')}>
+                <div className="inline-controls">
+                  <Button size="sm" variant={language === 'zh' ? 'primary' : 'ghost'} onClick={() => setLanguage('zh')}>
+                    {t('settings.chinese')}
+                  </Button>
+                  <Button size="sm" variant={language === 'en' ? 'primary' : 'ghost'} onClick={() => setLanguage('en')}>
+                    {t('settings.english')}
+                  </Button>
+                </div>
               </Row>
               <Row label="主題">
                 <div className="inline-controls">
@@ -260,6 +287,91 @@ export default function Settings() {
                   const result = await window.api.checkHealthGuardNow();
                   toast(result.ok ? `檢查完成，觸發 ${result.fired?.length || 0} 個通知` : result.error || '檢查失敗', result.ok ? 'ok' : 'error');
                 }}>執行</Button>
+              </Row>
+            </Card>
+          ) : null}
+
+          {category === 'overlay' ? (
+            <Card title="System Monitoring Overlay">
+              <Row label="啟用 Overlay" desc="建立透明、置頂、預設滑鼠穿透的螢幕監控視窗。">
+                <Toggle checked={overlay.enabled === true} onChange={(enabled) => saveOverlay({ enabled })} />
+              </Row>
+              <Row label="顯示 FPS" desc="目前保留 PresentMon / RTSS 接入口；未接入時會顯示 N/A。">
+                <Toggle checked={overlay.showFps !== false} onChange={(showFps) => saveOverlay({ showFps })} />
+              </Row>
+              <Row label="顯示 CPU">
+                <Toggle checked={overlay.showCpu !== false} onChange={(showCpu) => saveOverlay({ showCpu })} />
+              </Row>
+              <Row label="顯示 GPU">
+                <Toggle checked={overlay.showGpu !== false} onChange={(showGpu) => saveOverlay({ showGpu })} />
+              </Row>
+              <Row label="顯示 RAM">
+                <Toggle checked={overlay.showRam !== false} onChange={(showRam) => saveOverlay({ showRam })} />
+              </Row>
+              <Row label="更新頻率">
+                <select
+                  style={inputStyle}
+                  value={overlay.updateIntervalMs || 1000}
+                  onChange={(event) => saveOverlay({ updateIntervalMs: Number(event.target.value) })}
+                >
+                  <option value={500}>500 ms</option>
+                  <option value={1000}>1000 ms</option>
+                  <option value={2000}>2000 ms</option>
+                </select>
+              </Row>
+              <Row label="字體大小">
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min="10"
+                  max="28"
+                  value={overlay.fontSize || 14}
+                  onChange={(event) => saveOverlay({ fontSize: Number(event.target.value) })}
+                />
+              </Row>
+              <Row label="透明度">
+                <div className="inline-controls overlay-range">
+                  <input
+                    type="range"
+                    min="0.35"
+                    max="1"
+                    step="0.05"
+                    value={overlay.opacity ?? 0.92}
+                    onChange={(event) => saveOverlay({ opacity: Number(event.target.value) })}
+                  />
+                  <span>{Math.round((overlay.opacity ?? 0.92) * 100)}%</span>
+                </div>
+              </Row>
+              <Row label="顯示位置" desc="預設在主要螢幕左上角，日後可擴充為選擇指定螢幕。">
+                <div className="inline-controls">
+                  {[
+                    ['top-left', '左上'],
+                    ['top-right', '右上'],
+                    ['bottom-left', '左下'],
+                    ['bottom-right', '右下'],
+                  ].map(([value, label]) => (
+                    <Button
+                      key={value}
+                      size="sm"
+                      variant={(overlay.position || 'top-left') === value ? 'primary' : 'ghost'}
+                      onClick={() => saveOverlay({ position: value })}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </Row>
+              <Row label="滑鼠穿透" desc="開啟時不影響點擊其他程式；關閉後可拖曳 Overlay 位置。快捷鍵：Ctrl + Alt + Shift + O">
+                <Toggle checked={overlay.clickThrough !== false} onChange={(clickThrough) => saveOverlay({ clickThrough })} />
+              </Row>
+              <Row label="隨 App 啟動顯示" desc="保留給開機啟動流程使用；Overlay 開關會被保存。">
+                <Toggle checked={overlay.autoStart === true} onChange={(autoStart) => saveOverlay({ autoStart })} />
+              </Row>
+              <Row label="立即控制">
+                <div className="inline-controls">
+                  <Button size="sm" onClick={async () => { await window.api.overlay?.show?.(); load(); }}>顯示 Overlay</Button>
+                  <Button size="sm" variant="ghost" onClick={async () => { await window.api.overlay?.hide?.(); load(); }}>關閉 Overlay</Button>
+                </div>
               </Row>
             </Card>
           ) : null}

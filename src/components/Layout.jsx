@@ -35,7 +35,7 @@ export default function Layout({ current, onNavigate, children }) {
         <div className="footer">
           v1.1.0
           <br />
-          Ctrl+Shift+P 快速指令
+          Ctrl+Alt+Shift+N 快速指令
           <br />
           常駐於系統匣
         </div>

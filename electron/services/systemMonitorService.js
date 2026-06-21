@@ -185,6 +185,7 @@ function temperatureSummary(temperatures = {}) {
   const gpu = temperatures.gpu || [];
   const cpuValues = cpuCores.map((item) => Number(item.temperatureC)).filter(Number.isFinite);
   const gpuValues = gpu.map((item) => Number(item.temperatureC)).filter(Number.isFinite);
+  const cpuPowerWatts = Number(temperatures.cpuPowerWatts);
   const avg = (rows) => rows.length
     ? Math.round((rows.reduce((sum, value) => sum + value, 0) / rows.length) * 10) / 10
     : null;
@@ -194,6 +195,10 @@ function temperatureSummary(temperatures = {}) {
     cpuCoreCount: cpuCores.length,
     hottestCpu: cpuValues.length ? Math.max(...cpuValues) : null,
     averageCpu: avg(cpuValues),
+    cpuTemperatureSource: temperatures.cpuTemperatureSource || '',
+    cpuPowerAvailable: Number.isFinite(cpuPowerWatts),
+    cpuPowerWatts: Number.isFinite(cpuPowerWatts) ? Math.round(cpuPowerWatts * 10) / 10 : null,
+    cpuPowerSource: temperatures.cpuPowerSource || '',
     hottestGpu: gpuValues.length ? Math.max(...gpuValues) : null,
     sources: temperatures.sources || [],
     message: temperatures.message || '',

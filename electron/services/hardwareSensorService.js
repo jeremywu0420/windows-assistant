@@ -5,6 +5,11 @@ const path = require('path');
 const { execFile, spawn } = require('child_process');
 
 let attemptedCoreTempLaunch = false;
+const TEMPERATURE_CACHE_MS = 2000;
+const CPU_TEMP_HISTORY_LIMIT = 5;
+let temperatureCache = { at: 0, data: null };
+let temperatureInFlight = null;
+const cpuTemperatureHistory = new Map();
 
 function execPowerShell(script, timeout = 3500) {
   return new Promise((resolve) => {
@@ -176,6 +181,16 @@ public static class CoreTempSharedMemoryReader {
         sb.Append("\"cpuCount\":").Append(cpuCount).Append(",");
         sb.Append("\"fahrenheit\":").Append(data.ucFahrenheit == 1 ? "true" : "false").Append(",");
         sb.Append("\"deltaToTjMax\":").Append(data.ucDeltaToTjMax == 1 ? "true" : "false").Append(",");
+        sb.Append("\"powerSupported\":").Append(data.ucPowerSupported == 1 ? "true" : "false").Append(",");
+        sb.Append("\"powers\":[");
+        int powerCount = data.fPower == null ? 0 : Math.Min(data.fPower.Length, 128);
+        for (int i = 0; i < powerCount; i++) {
+          if (i > 0) sb.Append(",");
+          float power = data.fPower[i];
+          if (Single.IsNaN(power) || Single.IsInfinity(power)) sb.Append("null");
+          else sb.Append(power.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+        sb.Append("],");
         sb.Append("\"temps\":[");
         for (int i = 0; i < coreCount; i++) {
           if (i > 0) sb.Append(",");
@@ -207,6 +222,7 @@ try { Add-Type -TypeDefinition $code -ErrorAction Stop | Out-Null } catch {}
 
   const result = await execPowerShell(script, 4500);
   if (!result || !result.ok || !Array.isArray(result.temps)) return [];
+  const packagePowerWatts = coreTempPackagePower(result);
   return result.temps
     .filter((item) => Number.isFinite(Number(item.temperatureC)) && Number(item.temperatureC) > 0 && Number(item.temperatureC) < 130)
     .map((item) => ({
@@ -216,6 +232,8 @@ try { Add-Type -TypeDefinition $code -ErrorAction Stop | Out-Null } catch {}
       temperatureC: normalizeTemp(item.temperatureC),
       loadPercent: Number(item.load) || 0,
       tjMax: Number(item.tjMax) || null,
+      packagePowerWatts,
+      powerSupported: result.powerSupported === true,
       kind: 'cpu',
       source: 'Core Temp',
     }));
@@ -243,6 +261,70 @@ function normalizeTemp(value) {
   return Number.isFinite(number) ? Math.round(number * 10) / 10 : null;
 }
 
+function normalizeWatts(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.round(number * 10) / 10 : null;
+}
+
+function median(values) {
+  const sorted = values
+    .map((value) => Number(value))
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const mid = Math.floor(sorted.length / 2);
+  if (sorted.length % 2) return sorted[mid];
+  return (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function stableCoreTemperatures(cpuCores) {
+  const now = Date.now();
+  const activeKeys = new Set();
+  const stableRows = cpuCores.map((sensor, index) => {
+    const key = sensor.id || `${sensor.source || 'sensor'}:${sensor.name || index}`;
+    activeKeys.add(key);
+    const raw = normalizeTemp(sensor.temperatureC);
+    if (raw == null) return sensor;
+
+    const current = cpuTemperatureHistory.get(key) || [];
+    current.push({ at: now, value: raw });
+    const recent = current
+      .filter((item) => now - item.at <= 30000)
+      .slice(-CPU_TEMP_HISTORY_LIMIT);
+    cpuTemperatureHistory.set(key, recent);
+
+    const stable = recent.length >= 3 ? normalizeTemp(median(recent.map((item) => item.value))) : raw;
+    return {
+      ...sensor,
+      rawTemperatureC: raw,
+      temperatureC: stable,
+      stabilized: recent.length >= 3,
+      sampleCount: recent.length,
+    };
+  });
+
+  for (const [key, history] of cpuTemperatureHistory.entries()) {
+    if (activeKeys.has(key)) continue;
+    if (!history.length || now - history[history.length - 1].at > 60000) {
+      cpuTemperatureHistory.delete(key);
+    }
+  }
+
+  return stableRows;
+}
+
+function coreTempPackagePower(result) {
+  if (!result || result.powerSupported !== true || !Array.isArray(result.powers)) return null;
+  const rawPowers = result.powers
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0 && value < 1000);
+  if (!rawPowers.length) return null;
+
+  const cpuCount = Math.max(1, Math.min(Number(result.cpuCount) || 1, rawPowers.length));
+  const watts = rawPowers.slice(0, cpuCount).reduce((sum, value) => sum + value, 0);
+  return normalizeWatts(watts);
+}
+
 function classifySensor(row) {
   const name = String(row.Name || row.SensorName || row.InstanceName || '').trim();
   const hardware = String(row.Parent || row.Hardware || row.HardwareName || '').trim();
@@ -267,6 +349,21 @@ function toSensor(row, source) {
   };
 }
 
+function toPowerSensor(row, source) {
+  const name = String(row.Name || row.SensorName || row.InstanceName || '').trim() || 'Power';
+  const hardware = String(row.Parent || row.Hardware || row.HardwareName || '').trim();
+  const powerWatts = normalizeWatts(row.Value || row.Power || row.CurrentValue);
+  if (powerWatts == null || powerWatts <= 0 || powerWatts >= 1000) return null;
+  return {
+    id: `${source}:${hardware}:${name}:power`,
+    name,
+    hardware,
+    powerWatts,
+    kind: classifySensor(row),
+    source,
+  };
+}
+
 async function readHardwareMonitorWmi() {
   if (process.platform !== 'win32') return [];
   const script = [
@@ -283,6 +380,24 @@ async function readHardwareMonitorWmi() {
   ].join(' ');
   const rows = normalizeRows(await execPowerShell(script));
   return rows.map((row) => toSensor(row, row.Namespace || 'hardware-monitor')).filter(Boolean);
+}
+
+async function readHardwareMonitorPowerWmi() {
+  if (process.platform !== 'win32') return [];
+  const script = [
+    '$namespaces = @("root\\LibreHardwareMonitor", "root\\OpenHardwareMonitor");',
+    '$items = @();',
+    'foreach ($ns in $namespaces) {',
+    '  try {',
+    '    $items += Get-CimInstance -Namespace $ns -ClassName Sensor -ErrorAction Stop |',
+    '      Where-Object { $_.SensorType -eq "Power" } |',
+    '      Select-Object @{Name="Name";Expression={$_.Name}}, @{Name="Value";Expression={$_.Value}}, @{Name="Parent";Expression={$_.Parent}}, @{Name="Namespace";Expression={$ns}};',
+    '  } catch {}',
+    '}',
+    '$items | ConvertTo-Json -Depth 4 -Compress',
+  ].join(' ');
+  const rows = normalizeRows(await execPowerShell(script));
+  return rows.map((row) => toPowerSensor(row, row.Namespace || 'hardware-monitor')).filter(Boolean);
 }
 
 async function readThermalZoneWmi() {
@@ -333,26 +448,73 @@ function preferredGpuSensors(sensors, nvidiaRows) {
   return [...fromNvidia, ...fromMonitor].slice(0, 6);
 }
 
-async function getTemperatures() {
-  const [coreTempSensors, monitorSensors, thermalZones, nvidiaRows] = await Promise.all([
+function preferredCpuPower(powerSensors) {
+  const cpuPowerSensors = powerSensors.filter((sensor) => sensor.kind === 'cpu');
+  const preferred = cpuPowerSensors.find((sensor) => /package|total|cpu/i.test(sensor.name))
+    || cpuPowerSensors[0]
+    || null;
+  return preferred ? {
+    powerWatts: preferred.powerWatts,
+    source: preferred.source,
+    name: preferred.name,
+  } : null;
+}
+
+async function readTemperaturesFresh() {
+  const [coreTempSensors, monitorSensors, monitorPowerSensors, thermalZones, nvidiaRows] = await Promise.all([
     readCoreTempSharedMemory(),
     readHardwareMonitorWmi(),
+    readHardwareMonitorPowerWmi(),
     readThermalZoneWmi(),
     execNvidiaSmi(),
   ]);
   const sensors = [...monitorSensors, ...thermalZones];
-  const cpuCores = coreTempSensors.length ? coreTempSensors.slice(0, 10) : preferredCpuSensors(sensors, 10);
+  const rawCpuCores = coreTempSensors.length ? coreTempSensors.slice(0, 10) : preferredCpuSensors(sensors, 10);
+  const cpuCores = stableCoreTemperatures(rawCpuCores);
   const gpu = preferredGpuSensors(sensors, nvidiaRows);
+  const coreTempPowerWatts = coreTempSensors.find((sensor) => sensor.packagePowerWatts != null)?.packagePowerWatts ?? null;
+  const monitorCpuPower = preferredCpuPower(monitorPowerSensors);
+  const cpuPower = coreTempPowerWatts != null
+    ? { powerWatts: coreTempPowerWatts, source: 'Core Temp', name: 'CPU Package Power' }
+    : monitorCpuPower;
   return {
     ok: cpuCores.length > 0 || gpu.length > 0 || thermalZones.length > 0,
     cpuCores,
+    cpuTemperatureSource: coreTempSensors.length ? 'Core Temp' : (cpuCores[0] ? cpuCores[0].source : ''),
+    cpuPowerWatts: cpuPower ? cpuPower.powerWatts : null,
+    cpuPowerSource: cpuPower ? cpuPower.source : '',
+    cpuPowerSensors: monitorPowerSensors.filter((sensor) => sensor.kind === 'cpu').slice(0, 8),
     gpu,
     thermalZones,
-    sources: Array.from(new Set([...coreTempSensors.map((item) => item.source), ...sensors.map((item) => item.source), ...nvidiaRows.map((item) => item.source)])),
+    sources: Array.from(new Set([...coreTempSensors.map((item) => item.source), ...sensors.map((item) => item.source), ...monitorPowerSensors.map((item) => item.source), ...nvidiaRows.map((item) => item.source)])),
     message: cpuCores.length || gpu.length
       ? ''
       : '未偵測到 CPU/GPU 溫度。若要顯示每核心溫度，請保持 Core Temp 執行，或執行 LibreHardwareMonitor / OpenHardwareMonitor。',
   };
+}
+
+async function getTemperatures(options = {}) {
+  const now = Date.now();
+  const maxAgeMs = Number.isFinite(Number(options.maxAgeMs))
+    ? Math.max(0, Number(options.maxAgeMs))
+    : TEMPERATURE_CACHE_MS;
+
+  if (temperatureCache.data && maxAgeMs > 0 && now - temperatureCache.at < maxAgeMs) {
+    return temperatureCache.data;
+  }
+
+  if (temperatureInFlight) return temperatureInFlight;
+
+  temperatureInFlight = readTemperaturesFresh()
+    .then((data) => {
+      temperatureCache = { at: Date.now(), data };
+      return data;
+    })
+    .finally(() => {
+      temperatureInFlight = null;
+    });
+
+  return temperatureInFlight;
 }
 
 module.exports = {

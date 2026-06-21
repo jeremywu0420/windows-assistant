@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import Sidebar, { PAGE_TITLES } from './Sidebar.jsx';
+import Sidebar, { PAGE_TITLE_KEYS } from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
+import { useLocale } from '../i18n.jsx';
 
 function AppBackground() {
   const dots = useMemo(() => Array.from({ length: 16 }, () => ({
@@ -32,12 +33,13 @@ function AppBackground() {
 }
 
 export default function AppShell({ current, onNavigate, onOpenPalette, children }) {
+  const { t } = useLocale();
   return (
     <div className="app-shell">
       <AppBackground />
       <Sidebar current={current} onNavigate={onNavigate} />
       <div className="app-main">
-        <Topbar title={PAGE_TITLES[current] || 'PC Life Assistant'} onOpenPalette={onOpenPalette} onNavigate={onNavigate} />
+        <Topbar title={t(PAGE_TITLE_KEYS[current] || 'shell.brandCaption')} onOpenPalette={onOpenPalette} onNavigate={onNavigate} />
         <div className="content-scroll">{children}</div>
       </div>
     </div>

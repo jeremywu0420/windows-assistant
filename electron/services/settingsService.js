@@ -67,6 +67,23 @@ function defaultProjectHubSettings() {
   };
 }
 
+function defaultOverlaySettings() {
+  return {
+    enabled: false,
+    showFps: true,
+    showCpu: true,
+    showGpu: true,
+    showRam: true,
+    updateIntervalMs: 1000,
+    fontSize: 14,
+    opacity: 0.92,
+    position: 'top-left',
+    clickThrough: true,
+    autoStart: false,
+    displayId: 'primary',
+  };
+}
+
 function createDefaultSettings() {
   return {
     general: {
@@ -83,6 +100,7 @@ function createDefaultSettings() {
       notifications: true,
       autoUpdate: true,
       theme: 'system',
+      language: 'zh',
       accentColor: '#4f8cff',
       compactMode: false,
       watchEnabled: true,
@@ -110,6 +128,7 @@ function createDefaultSettings() {
       diskFreeGb: 50,
       diskFreePercent: 15,
     },
+    overlay: defaultOverlaySettings(),
     ui: {
       dismissedHints: [],
     },
@@ -211,6 +230,31 @@ function normalizeProjectHub(parsed, defaults) {
   };
 }
 
+function normalizeOverlay(parsed, defaults) {
+  const incoming = parsed.overlay && typeof parsed.overlay === 'object' ? parsed.overlay : {};
+  const interval = Number(incoming.updateIntervalMs);
+  const fontSize = Number(incoming.fontSize);
+  const opacity = Number(incoming.opacity);
+  const positions = new Set(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
+
+  return {
+    ...defaults.overlay,
+    ...incoming,
+    enabled: incoming.enabled === true,
+    showFps: incoming.showFps !== false,
+    showCpu: incoming.showCpu !== false,
+    showGpu: incoming.showGpu !== false,
+    showRam: incoming.showRam !== false,
+    updateIntervalMs: Number.isFinite(interval) ? Math.max(500, Math.min(5000, Math.round(interval))) : defaults.overlay.updateIntervalMs,
+    fontSize: Number.isFinite(fontSize) ? Math.max(10, Math.min(28, Math.round(fontSize))) : defaults.overlay.fontSize,
+    opacity: Number.isFinite(opacity) ? Math.max(0.35, Math.min(1, opacity)) : defaults.overlay.opacity,
+    position: positions.has(incoming.position) ? incoming.position : defaults.overlay.position,
+    clickThrough: incoming.clickThrough !== false,
+    autoStart: incoming.autoStart === true,
+    displayId: typeof incoming.displayId === 'string' && incoming.displayId.trim() ? incoming.displayId : defaults.overlay.displayId,
+  };
+}
+
 function mergeSettings(parsed) {
   const defaults = createDefaultSettings();
   return {
@@ -228,6 +272,7 @@ function mergeSettings(parsed) {
       ...defaults.healthGuard,
       ...(parsed.healthGuard || {}),
     },
+    overlay: normalizeOverlay(parsed, defaults),
     ui: {
       ...defaults.ui,
       ...(parsed.ui || {}),
@@ -296,6 +341,7 @@ function saveSettings(newSettings) {
 module.exports = {
   DEFAULT_SETTINGS,
   createDefaultSettings,
+  defaultOverlaySettings,
   defaultProjectHubSettings,
   activeConfigPath,
   getSettings,

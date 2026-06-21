@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, globalShortcut, dialog, powerMonitor } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, shell, nativeImage, globalShortcut, dialog, powerMonitor, screen } = require('electron');
 
 const settingsService = require('./services/settingsService');
 const systemMonitorService = require('./services/systemMonitorService');
@@ -25,8 +25,19 @@ const healthGuardService = require('./services/healthGuardService');
 const toolchainService = require('./services/toolchainService');
 const buildService = require('./services/buildService');
 const serialService = require('./services/serialService');
+const dashboardService = require('./services/dashboardService');
+const overlayMetricsService = require('./services/overlayMetricsService');
+const securityService = require('./services/securityService');
 
 const isDev = !app.isPackaged;
+
+if (isDev) {
+  try {
+    app.setPath('userData', path.join(app.getPath('temp'), 'pc-life-assistant-dev-profile'));
+  } catch (_) {
+    /* keep Electron's default dev profile if the path cannot be overridden */
+  }
+}
 
 // In-memory record of the last organize batch (for undo).
 let lastOrganizeBatch = null;
@@ -68,6 +79,9 @@ function isUsableDir(p) {
 const startedHidden = process.argv.includes('--hidden');
 
 let mainWindow = null;
+let overlayWindow = null;
+let overlayTimer = null;
+let overlayPolling = false;
 let tray = null;
 app.isQuitting = false;
 let lastUserInactiveAt = 0;
@@ -229,6 +243,198 @@ function createWindow(showOnReady = true) {
   return mainWindow;
 }
 
+function getOverlaySettings() {
+  const config = loadConfig();
+  return config.overlay || settingsService.defaultOverlaySettings();
+}
+
+function overlayBounds(settings = getOverlaySettings()) {
+  const display = screen.getPrimaryDisplay();
+  const area = display.workArea || display.bounds;
+  const width = 900;
+  const height = Math.max(42, Math.min(96, Number(settings.fontSize || 14) * 2.7 + 10));
+  const margin = 8;
+  const right = area.x + area.width - width - margin;
+  const bottom = area.y + area.height - height - margin;
+  const positions = {
+    'top-left': { x: area.x + margin, y: area.y + margin },
+    'top-right': { x: right, y: area.y + margin },
+    'bottom-left': { x: area.x + margin, y: bottom },
+    'bottom-right': { x: right, y: bottom },
+  };
+  const point = positions[settings.position] || positions['top-left'];
+  return { ...point, width, height };
+}
+
+function sendOverlaySettings() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayWindow.webContents.send('overlay:settings', getOverlaySettings());
+}
+
+function applyOverlayWindowSettings() {
+  if (!overlayWindow || overlayWindow.isDestroyed()) return;
+  const settings = getOverlaySettings();
+  try {
+    overlayWindow.setBounds(overlayBounds(settings));
+    overlayWindow.setAlwaysOnTop(true, 'screen-saver');
+    overlayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    overlayWindow.setIgnoreMouseEvents(settings.clickThrough !== false, { forward: true });
+    if (typeof overlayWindow.setFocusable === 'function') {
+      overlayWindow.setFocusable(settings.clickThrough === false);
+    }
+    sendOverlaySettings();
+  } catch (err) {
+    writeLog('error', `apply overlay settings failed: ${err.message}`);
+  }
+}
+
+async function sendOverlayMetrics() {
+  if (overlayPolling || !overlayWindow || overlayWindow.isDestroyed()) return;
+  overlayPolling = true;
+  try {
+    const metrics = await overlayMetricsService.getOverlayMetrics(loadConfig());
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.send('overlay:metrics', metrics);
+    }
+  } catch (err) {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.send('overlay:metrics', {
+        ok: false,
+        generatedAt: new Date().toISOString(),
+        errors: [err.message],
+      });
+    }
+  } finally {
+    overlayPolling = false;
+  }
+}
+
+function stopOverlayTimer() {
+  if (overlayTimer) {
+    clearInterval(overlayTimer);
+    overlayTimer = null;
+  }
+}
+
+function startOverlayTimer() {
+  stopOverlayTimer();
+  const settings = getOverlaySettings();
+  const interval = Math.max(500, Math.min(5000, Number(settings.updateIntervalMs || 1000)));
+  overlayTimer = setInterval(sendOverlayMetrics, interval);
+  sendOverlayMetrics();
+}
+
+function loadOverlayEntry(win) {
+  if (isDev) {
+    win.loadURL('http://localhost:5173/?overlay=1');
+  } else {
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'), { query: { overlay: '1' } });
+  }
+}
+
+function createOverlayWindow() {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    applyOverlayWindowSettings();
+    overlayWindow.showInactive();
+    startOverlayTimer();
+    return overlayWindow;
+  }
+
+  const settings = getOverlaySettings();
+  overlayWindow = new BrowserWindow({
+    ...overlayBounds(settings),
+    show: false,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    movable: true,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    focusable: settings.clickThrough === false,
+    hasShadow: false,
+    backgroundColor: '#00000000',
+    title: 'NEXUS System Overlay',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  overlayWindow.removeMenu();
+  applyOverlayWindowSettings();
+  loadOverlayEntry(overlayWindow);
+
+  overlayWindow.once('ready-to-show', () => {
+    if (!overlayWindow || overlayWindow.isDestroyed()) return;
+    overlayWindow.showInactive();
+    applyOverlayWindowSettings();
+    sendOverlaySettings();
+    startOverlayTimer();
+  });
+
+  overlayWindow.webContents.on('did-finish-load', () => {
+    sendOverlaySettings();
+    sendOverlayMetrics();
+  });
+
+  overlayWindow.on('closed', () => {
+    overlayWindow = null;
+    stopOverlayTimer();
+  });
+
+  return overlayWindow;
+}
+
+function destroyOverlayWindow() {
+  stopOverlayTimer();
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.destroy();
+  }
+  overlayWindow = null;
+}
+
+function saveOverlaySettingsPatch(patch = {}) {
+  const res = settingsService.getSettings();
+  const next = settingsService.mergeSettings({
+    ...(res.settings || {}),
+    overlay: {
+      ...((res.settings || {}).overlay || {}),
+      ...patch,
+    },
+  });
+  const saved = settingsService.saveSettings(next);
+  return { ...saved, settings: next.overlay };
+}
+
+function applyOverlayFromSettings(options = {}) {
+  const settings = getOverlaySettings();
+  const shouldShow = settings.enabled || (options.startup === true && settings.autoStart === true);
+  if (shouldShow) {
+    createOverlayWindow();
+  } else {
+    destroyOverlayWindow();
+  }
+  refreshTrayMenu();
+}
+
+function setOverlayEnabled(enabled) {
+  const saved = saveOverlaySettingsPatch({ enabled: !!enabled });
+  if (saved.ok) applyOverlayFromSettings();
+  return saved;
+}
+
+function toggleOverlayClickThrough() {
+  const current = getOverlaySettings();
+  const saved = saveOverlaySettingsPatch({ clickThrough: current.clickThrough === false });
+  if (saved.ok) applyOverlayWindowSettings();
+  return saved;
+}
+
 function bringWindowToFront(win, aggressive = false) {
   if (!win || win.isDestroyed()) return;
   if (win.isMinimized()) win.restore();
@@ -295,6 +501,7 @@ async function runProgrammingModeFromTray() {
 function buildTrayMenu() {
   const paused = fileWatcherService.isPaused();
   const updates = updateService.getStatus().status;
+  const overlaySettings = getOverlaySettings();
   return Menu.buildFromTemplate([
     { label: 'Open PC Life Assistant', click: () => showWindow('dashboard') },
     { label: 'Organize Downloads', click: () => showWindow('downloads') },
@@ -307,6 +514,10 @@ function buildTrayMenu() {
           mainWindow.webContents.send('app:monitoring-changed', { paused: !paused });
         }
       },
+    },
+    {
+      label: overlaySettings.enabled ? 'Hide System Overlay' : 'Show System Overlay',
+      click: () => setOverlayEnabled(!overlaySettings.enabled),
     },
     { label: 'Settings', click: () => showWindow('settings') },
     {
@@ -360,6 +571,14 @@ function createTray() {
 // IPC handlers (clearly namespaced: <domain>:<action>)
 // ---------------------------------------------------------------------------
 function registerIpc() {
+  ipcMain.handle('dashboard:getStats', async () => {
+    try {
+      return await dashboardService.getDashboardStats(loadConfig());
+    } catch (err) {
+      return { ok: false, error: err.message };
+    }
+  });
+
   ipcMain.handle('system:getStatus', async () => {
     try {
       const config = loadConfig();
@@ -399,6 +618,48 @@ function registerIpc() {
       };
     } catch (err) {
       return { ok: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('security:getStatus', async () => {
+    try {
+      return await securityService.getSecurityStatus();
+    } catch (err) {
+      return { ok: false, code: 'SECURITY_SERVICE_FAILED', error: err.message };
+    }
+  });
+
+  ipcMain.handle('security:quickScan', async () => {
+    try {
+      return await securityService.startQuickScan();
+    } catch (err) {
+      return { ok: false, code: 'SECURITY_SERVICE_FAILED', error: err.message };
+    }
+  });
+
+  ipcMain.handle('security:updateSignatures', async () => {
+    try {
+      return await securityService.updateSignatures();
+    } catch (err) {
+      return { ok: false, code: 'SECURITY_SERVICE_FAILED', error: err.message };
+    }
+  });
+
+  ipcMain.handle('security:openWindowsSecurity', async () => {
+    try {
+      await shell.openExternal('ms-settings:windowsdefender');
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'OPEN_SETTINGS_FAILED', error: err.message };
+    }
+  });
+
+  ipcMain.handle('security:openFirewallSettings', async () => {
+    try {
+      await shell.openExternal('ms-settings:windowsdefender');
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, code: 'OPEN_SETTINGS_FAILED', error: err.message };
     }
   });
 
@@ -532,6 +793,34 @@ function registerIpc() {
 
   ipcMain.handle('settings:get', async () => settingsService.getSettings());
 
+  ipcMain.handle('overlay:getSettings', async () => ({
+    ok: true,
+    settings: getOverlaySettings(),
+    running: !!(overlayWindow && !overlayWindow.isDestroyed()),
+  }));
+
+  ipcMain.handle('overlay:saveSettings', async (_event, patch = {}) => {
+    const saved = saveOverlaySettingsPatch(patch);
+    if (saved.ok) applyOverlayFromSettings();
+    return {
+      ...saved,
+      running: !!(overlayWindow && !overlayWindow.isDestroyed()),
+    };
+  });
+
+  ipcMain.handle('overlay:show', async () => setOverlayEnabled(true));
+  ipcMain.handle('overlay:hide', async () => setOverlayEnabled(false));
+  ipcMain.handle('overlay:toggle', async () => {
+    const settings = getOverlaySettings();
+    return setOverlayEnabled(!settings.enabled);
+  });
+  ipcMain.handle('overlay:setClickThrough', async (_event, value) => {
+    const saved = saveOverlaySettingsPatch({ clickThrough: value !== false });
+    if (saved.ok) applyOverlayWindowSettings();
+    return saved;
+  });
+  ipcMain.handle('overlay:getSnapshot', async () => overlayMetricsService.getOverlayMetrics(loadConfig()));
+
   ipcMain.handle('settings:getSetupStatus', async () => {
     const res = settingsService.getSettings();
     const settings = res.settings || {};
@@ -555,9 +844,11 @@ function registerIpc() {
     return { ok: true, complete, checks, projectRoots, settings };
   });
 
-  ipcMain.handle('settings:save', async (_event, newSettings) =>
-    settingsService.saveSettings(newSettings)
-  );
+  ipcMain.handle('settings:save', async (_event, newSettings) => {
+    const saved = settingsService.saveSettings(settingsService.mergeSettings(newSettings || {}));
+    if (saved.ok) applyOverlayFromSettings();
+    return saved;
+  });
 
   ipcMain.handle('settings:openFile', async () => {
     const res = settingsService.getSettings();
@@ -1022,6 +1313,7 @@ function registerIpc() {
         configureAutoLaunch();
         startMonitoring();
         startBackgroundServices();
+        applyOverlayFromSettings();
         refreshTrayMenu();
       }
       return saved;
@@ -1037,6 +1329,7 @@ function registerIpc() {
       configureAutoLaunch();
       startMonitoring();
       startBackgroundServices();
+      applyOverlayFromSettings();
       refreshTrayMenu();
     }
     return saved;
@@ -1085,6 +1378,7 @@ app.whenReady().then(() => {
   createTray();
   startMonitoring();
   startBackgroundServices();
+  applyOverlayFromSettings({ startup: true });
   updateService.setup({
     getWindow: () => mainWindow,
     notify: (title, body) => notificationService.notify(title, body),
@@ -1116,10 +1410,15 @@ app.whenReady().then(() => {
     }
   });
 
-  // Global shortcut: Ctrl+Shift+P opens the Command Palette (works even unfocused).
-  const registered = globalShortcut.register('CommandOrControl+Shift+P', openCommandPalette);
+  // Global shortcut: Ctrl+Alt+Shift+N opens the Command Palette (works even unfocused).
+  const registered = globalShortcut.register('CommandOrControl+Alt+Shift+N', openCommandPalette);
   if (!registered) {
-    console.warn('[main] 無法註冊 Ctrl+Shift+P 全域快捷鍵（可能已被其他程式佔用）。');
+    console.warn('[main] 無法註冊 Ctrl+Alt+Shift+N 全域快捷鍵（可能已被其他程式佔用）。');
+  }
+
+  const overlayShortcut = globalShortcut.register('CommandOrControl+Alt+Shift+O', toggleOverlayClickThrough);
+  if (!overlayShortcut) {
+    console.warn('[main] could not register Ctrl+Alt+Shift+O for overlay click-through toggle.');
   }
 
   app.on('activate', () => {
@@ -1129,6 +1428,7 @@ app.whenReady().then(() => {
 });
 
 app.on('will-quit', () => {
+  destroyOverlayWindow();
   globalShortcut.unregisterAll();
 });
 

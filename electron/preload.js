@@ -31,7 +31,15 @@ const cleanupApi = {
  */
 contextBridge.exposeInMainWorld('api', {
   // System / health
+  getDashboardStats: () => ipcRenderer.invoke('dashboard:getStats'),
   getSystemStatus: () => ipcRenderer.invoke('system:getStatus'),
+  security: {
+    getStatus: () => ipcRenderer.invoke('security:getStatus'),
+    quickScan: () => ipcRenderer.invoke('security:quickScan'),
+    updateSignatures: () => ipcRenderer.invoke('security:updateSignatures'),
+    openWindowsSecurity: () => ipcRenderer.invoke('security:openWindowsSecurity'),
+    openFirewallSettings: () => ipcRenderer.invoke('security:openFirewallSettings'),
+  },
 
   // Quick modes
   listModes: () => ipcRenderer.invoke('mode:list'),
@@ -118,6 +126,27 @@ contextBridge.exposeInMainWorld('api', {
 
   // Clean Center
   cleanup: cleanupApi,
+
+  // System overlay
+  overlay: {
+    getSettings: () => ipcRenderer.invoke('overlay:getSettings'),
+    saveSettings: (patch) => ipcRenderer.invoke('overlay:saveSettings', patch),
+    show: () => ipcRenderer.invoke('overlay:show'),
+    hide: () => ipcRenderer.invoke('overlay:hide'),
+    toggle: () => ipcRenderer.invoke('overlay:toggle'),
+    setClickThrough: (value) => ipcRenderer.invoke('overlay:setClickThrough', value),
+    getSnapshot: () => ipcRenderer.invoke('overlay:getSnapshot'),
+    onMetrics: (callback) => {
+      const handler = (_event, metrics) => callback(metrics);
+      ipcRenderer.on('overlay:metrics', handler);
+      return () => ipcRenderer.removeListener('overlay:metrics', handler);
+    },
+    onSettings: (callback) => {
+      const handler = (_event, settings) => callback(settings);
+      ipcRenderer.on('overlay:settings', handler);
+      return () => ipcRenderer.removeListener('overlay:settings', handler);
+    },
+  },
 
   // Screenshot Organizer
   getScreenshotSettings: () => ipcRenderer.invoke('screenshots:getSettings'),
