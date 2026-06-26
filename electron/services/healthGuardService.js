@@ -43,7 +43,9 @@ async function check(settings = {}) {
   });
   const alerts = [];
 
-  const hotCpu = (metrics.temperatures?.cpuCores || []).filter((sensor) => sensor.temperatureC >= config.cpuTempC);
+  const hotCpu = (metrics.temperatures?.cpuCores || []).filter(
+    (sensor) => sensor.temperatureC >= config.cpuTempC,
+  );
   if (hotCpu.length) {
     alerts.push({
       key: 'cpu-temp',
@@ -54,7 +56,9 @@ async function check(settings = {}) {
     });
   }
 
-  const hotGpu = (metrics.temperatures?.gpu || []).filter((sensor) => sensor.temperatureC >= config.gpuTempC);
+  const hotGpu = (metrics.temperatures?.gpu || []).filter(
+    (sensor) => sensor.temperatureC >= config.gpuTempC,
+  );
   if (hotGpu.length) {
     alerts.push({
       key: 'gpu-temp',
@@ -112,12 +116,14 @@ function start(getSettings, options = {}) {
   const run = () => {
     const latest = typeof getSettings === 'function' ? getSettings() : {};
     check(latest).catch((err) => {
-      notificationService.addEvent({
-        title: '健康守護檢查失敗',
-        body: err.message,
-        level: 'warn',
-        source: 'health-guard',
-      }).catch(() => {});
+      notificationService
+        .addEvent({
+          title: '健康守護檢查失敗',
+          body: err.message,
+          level: 'warn',
+          source: 'health-guard',
+        })
+        .catch(() => {});
     });
   };
   if (options.runNow !== false) setTimeout(run, 5000);

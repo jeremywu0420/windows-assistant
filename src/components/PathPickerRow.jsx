@@ -1,7 +1,15 @@
 import React from 'react';
 import Button from './Button.jsx';
 
-export default function PathPickerRow({ label, description, value, onPick, onDetect, onChange, placeholder }) {
+export default function PathPickerRow({
+  label,
+  description,
+  value,
+  onPick,
+  onDetect,
+  onChange,
+  placeholder,
+}) {
   return (
     <div className="path-picker-row">
       <div className="path-picker-main">
@@ -15,8 +23,16 @@ export default function PathPickerRow({ label, description, value, onPick, onDet
         />
       </div>
       <div className="head-actions">
-        {onDetect ? <Button size="sm" icon="AU" onClick={onDetect}>自動偵測</Button> : null}
-        {onPick ? <Button size="sm" icon="PK" onClick={onPick}>手動選擇</Button> : null}
+        {onDetect ? (
+          <Button size="sm" icon="AU" onClick={onDetect}>
+            自動偵測
+          </Button>
+        ) : null}
+        {onPick ? (
+          <Button size="sm" icon="PK" onClick={onPick}>
+            手動選擇
+          </Button>
+        ) : null}
       </div>
     </div>
   );

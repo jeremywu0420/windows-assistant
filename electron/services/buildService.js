@@ -18,7 +18,8 @@ let activeProc = null;
 
 function listFiles(dir, ext) {
   try {
-    return fs.readdirSync(dir)
+    return fs
+      .readdirSync(dir)
       .filter((f) => f.toLowerCase().endsWith(ext))
       .map((f) => path.join(dir, f));
   } catch (_) {
@@ -35,7 +36,11 @@ function detectBuild(folderPath) {
   const base = { supported: false, type: '', label: '', steps: [], hint: '' };
   if (!folderPath) return { ...base, error: '未提供資料夾路徑' };
   let stat;
-  try { stat = fs.statSync(folderPath); } catch (_) { return { ...base, error: `找不到資料夾：${folderPath}` }; }
+  try {
+    stat = fs.statSync(folderPath);
+  } catch (_) {
+    return { ...base, error: `找不到資料夾：${folderPath}` };
+  }
   if (!stat.isDirectory()) return { ...base, error: '路徑不是資料夾' };
 
   const ino = listFiles(folderPath, '.ino');
@@ -46,14 +51,26 @@ function detectBuild(folderPath) {
 
   if (ino.length) {
     return {
-      supported: true, type: 'arduino', label: 'Arduino (arduino-cli compile)', hint: '',
-      steps: [{ cmd: 'arduino-cli', args: ['compile', '--fqbn', 'arduino:avr:uno', folderPath], cwd: folderPath }],
+      supported: true,
+      type: 'arduino',
+      label: 'Arduino (arduino-cli compile)',
+      hint: '',
+      steps: [
+        {
+          cmd: 'arduino-cli',
+          args: ['compile', '--fqbn', 'arduino:avr:uno', folderPath],
+          cwd: folderPath,
+        },
+      ],
     };
   }
   if (v.length) {
     const out = tmp('sim.out');
     return {
-      supported: true, type: 'verilog', label: 'Verilog (iverilog + vvp)', hint: '',
+      supported: true,
+      type: 'verilog',
+      label: 'Verilog (iverilog + vvp)',
+      hint: '',
       steps: [
         { cmd: 'iverilog', args: ['-o', out, ...v], cwd: folderPath },
         { cmd: 'vvp', args: [out], cwd: folderPath },
@@ -62,22 +79,35 @@ function detectBuild(folderPath) {
   }
   if (vhd.length) {
     const workdir = tmp('ghdl-work');
-    try { fs.mkdirSync(workdir, { recursive: true }); } catch (_) { /* ignore */ }
+    try {
+      fs.mkdirSync(workdir, { recursive: true });
+    } catch (_) {
+      /* ignore */
+    }
     return {
-      supported: true, type: 'vhdl', label: 'VHDL (ghdl -a analyze)', hint: '',
+      supported: true,
+      type: 'vhdl',
+      label: 'VHDL (ghdl -a analyze)',
+      hint: '',
       steps: [{ cmd: 'ghdl', args: ['-a', `--workdir=${workdir}`, ...vhd], cwd: folderPath }],
     };
   }
   if (m.length) {
     return {
-      supported: true, type: 'octave', label: 'MATLAB/Octave (octave)', hint: '',
+      supported: true,
+      type: 'octave',
+      label: 'MATLAB/Octave (octave)',
+      hint: '',
       steps: [{ cmd: 'octave', args: ['--no-gui', '--norc', m[0]], cwd: folderPath }],
     };
   }
   if (hasCMake) {
     const build = tmp('cmake-build');
     return {
-      supported: true, type: 'cmake', label: 'C/C++ (CMake + Ninja)', hint: '',
+      supported: true,
+      type: 'cmake',
+      label: 'C/C++ (CMake + Ninja)',
+      hint: '',
       steps: [
         { cmd: 'cmake', args: ['-S', folderPath, '-B', build, '-G', 'Ninja'], cwd: folderPath },
         { cmd: 'cmake', args: ['--build', build], cwd: folderPath },
@@ -103,7 +133,8 @@ function runStep(step, onData) {
     proc.stdout.on('data', (d) => onData({ stream: 'stdout', text: d.toString() }));
     proc.stderr.on('data', (d) => onData({ stream: 'stderr', text: d.toString() }));
     proc.on('error', (err) => {
-      const hint = err.code === 'ENOENT' ? `（找不到 ${step.cmd}，請到「環境健檢」確認已安裝並在 PATH）` : '';
+      const hint =
+        err.code === 'ENOENT' ? `（找不到 ${step.cmd}，請到「環境健檢」確認已安裝並在 PATH）` : '';
       onData({ stream: 'stderr', text: `${err.message} ${hint}` });
       activeProc = null;
       resolve({ ok: false, code: -1 });
@@ -163,7 +194,11 @@ async function flash(folderPath, port, onData) {
 
 function cancelBuild() {
   if (activeProc) {
-    try { activeProc.kill(); } catch (_) { /* ignore */ }
+    try {
+      activeProc.kill();
+    } catch (_) {
+      /* ignore */
+    }
     activeProc = null;
     return { ok: true };
   }

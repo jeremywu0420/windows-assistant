@@ -1,7 +1,13 @@
 import React from 'react';
 import EmptyState from './EmptyState.jsx';
 
-export default function DataTable({ columns, rows, emptyTitle = '尚無資料', emptyDescription, rowKey }) {
+export default function DataTable({
+  columns,
+  rows,
+  emptyTitle = '尚無資料',
+  emptyDescription,
+  rowKey,
+}) {
   if (!rows || rows.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} />;
   }
@@ -12,7 +18,9 @@ export default function DataTable({ columns, rows, emptyTitle = '尚無資料', 
         <thead>
           <tr>
             {columns.map((column) => (
-              <th key={column.key} style={{ width: column.width }}>{column.label}</th>
+              <th key={column.key} style={{ width: column.width }}>
+                {column.label}
+              </th>
             ))}
           </tr>
         </thead>

@@ -72,7 +72,7 @@ function pointInPolygon(x, y, points) {
     const yi = points[i][1];
     const xj = points[j][0];
     const yj = points[j][1];
-    const intersect = ((yi > y) !== (yj > y)) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
     if (intersect) inside = !inside;
   }
   return inside;
@@ -103,7 +103,8 @@ function blendPixel(px, width, x, y, rgba) {
 function drawRoundedRect(px, size, left, top, right, bottom, radius, rgba) {
   for (let y = Math.floor(top); y <= Math.ceil(bottom); y++) {
     for (let x = Math.floor(left); x <= Math.ceil(right); x++) {
-      if (roundedRectContains(x + 0.5, y + 0.5, left, top, right, bottom, radius)) blendPixel(px, size, x, y, rgba);
+      if (roundedRectContains(x + 0.5, y + 0.5, left, top, right, bottom, radius))
+        blendPixel(px, size, x, y, rgba);
     }
   }
 }
@@ -116,7 +117,10 @@ function drawPolygon(px, size, points, from, to) {
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
       if (!pointInPolygon(x + 0.5, y + 0.5, points)) continue;
-      const t = Math.min(1, Math.max(0, ((x - minX) + (y - minY)) / Math.max(1, (maxX - minX) + (maxY - minY))));
+      const t = Math.min(
+        1,
+        Math.max(0, (x - minX + (y - minY)) / Math.max(1, maxX - minX + (maxY - minY))),
+      );
       blendPixel(px, size, x, y, lerpColor(from, to, t));
     }
   }
@@ -140,7 +144,8 @@ function drawLine(px, size, ax, ay, bx, by, width, rgba) {
   const maxY = Math.ceil(Math.max(ay, by) + width);
   for (let y = minY; y <= maxY; y++) {
     for (let x = minX; x <= maxX; x++) {
-      if (distToSegment(x + 0.5, y + 0.5, ax, ay, bx, by) <= width / 2) blendPixel(px, size, x, y, rgba);
+      if (distToSegment(x + 0.5, y + 0.5, ax, ay, bx, by) <= width / 2)
+        blendPixel(px, size, x, y, rgba);
     }
   }
 }
@@ -182,11 +187,72 @@ function renderPixels(size) {
   drawRoundedRect(px, workSize, 5 * s, 4 * s, 89 * s, 88 * s, 20 * s, [255, 255, 255, 245]);
   drawRoundedRect(px, workSize, 7 * s, 6 * s, 87 * s, 86 * s, 18 * s, [239, 247, 255, 70]);
 
-  drawPolygon(px, workSize, poly([[48, 13], [83, 33], [61, 46], [48, 39], [35, 46], [13, 33]]), [92, 228, 255, 255], [31, 55, 216, 255]);
-  drawPolygon(px, workSize, poly([[11, 39], [33, 51], [33, 85], [11, 72]]), [57, 201, 255, 255], [42, 95, 239, 255]);
-  drawPolygon(px, workSize, poly([[85, 39], [63, 51], [63, 85], [85, 72]]), [78, 165, 255, 255], [24, 40, 191, 255]);
-  drawPolygon(px, workSize, poly([[36, 58], [48, 65], [60, 58], [60, 86], [48, 94], [36, 86]]), [61, 134, 255, 245], [28, 49, 201, 245]);
-  drawPolygon(px, workSize, poly([[48, 42], [60, 49], [60, 63], [48, 70], [36, 63], [36, 49]]), [255, 255, 255, 245], [238, 248, 255, 235]);
+  drawPolygon(
+    px,
+    workSize,
+    poly([
+      [48, 13],
+      [83, 33],
+      [61, 46],
+      [48, 39],
+      [35, 46],
+      [13, 33],
+    ]),
+    [92, 228, 255, 255],
+    [31, 55, 216, 255],
+  );
+  drawPolygon(
+    px,
+    workSize,
+    poly([
+      [11, 39],
+      [33, 51],
+      [33, 85],
+      [11, 72],
+    ]),
+    [57, 201, 255, 255],
+    [42, 95, 239, 255],
+  );
+  drawPolygon(
+    px,
+    workSize,
+    poly([
+      [85, 39],
+      [63, 51],
+      [63, 85],
+      [85, 72],
+    ]),
+    [78, 165, 255, 255],
+    [24, 40, 191, 255],
+  );
+  drawPolygon(
+    px,
+    workSize,
+    poly([
+      [36, 58],
+      [48, 65],
+      [60, 58],
+      [60, 86],
+      [48, 94],
+      [36, 86],
+    ]),
+    [61, 134, 255, 245],
+    [28, 49, 201, 245],
+  );
+  drawPolygon(
+    px,
+    workSize,
+    poly([
+      [48, 42],
+      [60, 49],
+      [60, 63],
+      [48, 70],
+      [36, 63],
+      [36, 49],
+    ]),
+    [255, 255, 255, 245],
+    [238, 248, 255, 235],
+  );
 
   drawLine(px, workSize, 24 * s, 37 * s, 36 * s, 44 * s, 1.25 * s, [255, 255, 255, 90]);
   drawLine(px, workSize, 72 * s, 44 * s, 86 * s, 37 * s, 1.25 * s, [255, 255, 255, 90]);

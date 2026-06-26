@@ -3,12 +3,28 @@
 // ---- Engineering notation -------------------------------------------------
 
 const SI = [
-  { p: 'T', e: 12 }, { p: 'G', e: 9 }, { p: 'M', e: 6 }, { p: 'k', e: 3 },
-  { p: '', e: 0 }, { p: 'm', e: -3 }, { p: 'µ', e: -6 }, { p: 'n', e: -9 }, { p: 'p', e: -12 },
+  { p: 'T', e: 12 },
+  { p: 'G', e: 9 },
+  { p: 'M', e: 6 },
+  { p: 'k', e: 3 },
+  { p: '', e: 0 },
+  { p: 'm', e: -3 },
+  { p: 'µ', e: -6 },
+  { p: 'n', e: -9 },
+  { p: 'p', e: -12 },
 ];
 
 const PREFIX_MAP = {
-  t: 12, g: 9, meg: 6, k: 3, '': 0, m: -3, u: -6, µ: -6, n: -9, p: -12,
+  t: 12,
+  g: 9,
+  meg: 6,
+  k: 3,
+  '': 0,
+  m: -3,
+  u: -6,
+  µ: -6,
+  n: -9,
+  p: -12,
 };
 
 // Number -> "4.7 kΩ" style string.
@@ -18,7 +34,10 @@ export function formatEng(value, unit = '', sig = 4) {
   const abs = Math.abs(value);
   let chosen = SI[SI.length - 1];
   for (const s of SI) {
-    if (abs >= Math.pow(10, s.e)) { chosen = s; break; }
+    if (abs >= Math.pow(10, s.e)) {
+      chosen = s;
+      break;
+    }
   }
   const scaled = value / Math.pow(10, chosen.e);
   const rounded = parseFloat(scaled.toPrecision(sig));
@@ -46,15 +65,30 @@ export function parseEng(input) {
 // Provide any two of { v, i, r, p }; returns all four (NaN if unsolvable).
 export function ohmsLaw({ v, i, r, p }) {
   const has = (x) => Number.isFinite(x);
-  let V = v; let I = i; let R = r; let P = p;
+  let V = v;
+  let I = i;
+  let R = r;
+  let P = p;
 
-  if (has(v) && has(i)) { R = v / i; P = v * i; }
-  else if (has(v) && has(r)) { I = v / r; P = (v * v) / r; }
-  else if (has(v) && has(p)) { I = p / v; R = (v * v) / p; }
-  else if (has(i) && has(r)) { V = i * r; P = i * i * r; }
-  else if (has(i) && has(p)) { V = p / i; R = p / (i * i); }
-  else if (has(r) && has(p)) { V = Math.sqrt(p * r); I = Math.sqrt(p / r); }
-  else return { v: NaN, i: NaN, r: NaN, p: NaN };
+  if (has(v) && has(i)) {
+    R = v / i;
+    P = v * i;
+  } else if (has(v) && has(r)) {
+    I = v / r;
+    P = (v * v) / r;
+  } else if (has(v) && has(p)) {
+    I = p / v;
+    R = (v * v) / p;
+  } else if (has(i) && has(r)) {
+    V = i * r;
+    P = i * i * r;
+  } else if (has(i) && has(p)) {
+    V = p / i;
+    R = p / (i * i);
+  } else if (has(r) && has(p)) {
+    V = Math.sqrt(p * r);
+    I = Math.sqrt(p / r);
+  } else return { v: NaN, i: NaN, r: NaN, p: NaN };
 
   return { v: V, i: I, r: R, p: P };
 }
@@ -149,10 +183,18 @@ export function encodeResistorValue(ohms, bandCount = 4) {
   const sig = bandCount === 5 ? 3 : 2;
   let exp = Math.floor(Math.log10(ohms)) - (sig - 1);
   let d = Math.round(ohms / Math.pow(10, exp));
-  if (d >= Math.pow(10, sig)) { d = Math.round(d / 10); exp += 1; } // rounding carry
-  if (d < Math.pow(10, sig - 1)) { d *= 10; exp -= 1; } // keep leading digit non-zero
+  if (d >= Math.pow(10, sig)) {
+    d = Math.round(d / 10);
+    exp += 1;
+  } // rounding carry
+  if (d < Math.pow(10, sig - 1)) {
+    d *= 10;
+    exp -= 1;
+  } // keep leading digit non-zero
   // Multiplier band must be one of the available colours (10^-2 .. 10^9).
-  const mult = RESISTOR_COLORS.find((c) => c.mult != null && Math.abs(c.mult - Math.pow(10, exp)) < 1e-15);
+  const mult = RESISTOR_COLORS.find(
+    (c) => c.mult != null && Math.abs(c.mult - Math.pow(10, exp)) < 1e-15,
+  );
   if (!mult) return null;
   const digitStr = String(d).padStart(sig, '0');
   const bands = [];
@@ -171,7 +213,9 @@ export function encodeResistorValue(ohms, bandCount = 4) {
 // Parse an integer string in a given base; returns NaN if invalid.
 export function parseInBase(str, base) {
   if (str == null) return NaN;
-  const s = String(str).trim().replace(/^0[xbo]/i, '');
+  const s = String(str)
+    .trim()
+    .replace(/^0[xbo]/i, '');
   if (s === '') return NaN;
   if (!/^[0-9a-fA-F]+$/.test(s)) return NaN;
   const n = parseInt(s, base);

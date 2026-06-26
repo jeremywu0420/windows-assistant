@@ -2,7 +2,11 @@
 
 const path = require('path');
 const { CATEGORY_RULES, getCategoryRule, normalizeExt } = require('./organizerRules');
-const { documentSubcategoryForExt, getDocumentSubRule, isDocumentExt } = require('./documentClassifier');
+const {
+  documentSubcategoryForExt,
+  getDocumentSubRule,
+  isDocumentExt,
+} = require('./documentClassifier');
 
 function buildClassification(category, ext, options = {}) {
   const categoryRule = getCategoryRule(category);

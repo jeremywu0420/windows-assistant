@@ -20,7 +20,9 @@ function matches(condition, info) {
   if (!condition) return false;
   switch (condition.type) {
     case 'extension': {
-      const want = String(condition.value || '').trim().toLowerCase();
+      const want = String(condition.value || '')
+        .trim()
+        .toLowerCase();
       if (!want) return false;
       const norm = want.startsWith('.') ? want : `.${want}`;
       return !!info.ext && info.ext.toLowerCase() === norm;
@@ -48,16 +50,19 @@ async function organizeFileByType(action, info) {
   };
   const classification = classifyFile(info.file, settings);
   const targetDir = path.join(rootPath, ...classification.targetSegments);
-  const res = await fileOrganizerService.organize([
-    {
-      name: info.file,
-      sourcePath: info.path,
-      targetDir,
-      category: classification.category,
-      categoryPath: classification.categoryPath,
-      rootPath,
-    },
-  ], settings);
+  const res = await fileOrganizerService.organize(
+    [
+      {
+        name: info.file,
+        sourcePath: info.path,
+        targetDir,
+        category: classification.category,
+        categoryPath: classification.categoryPath,
+        rootPath,
+      },
+    ],
+    settings,
+  );
   const first = res.results && res.results[0];
   return {
     ok: res.ok,
@@ -71,7 +76,8 @@ async function organizeFileByType(action, info) {
 
 async function organizeFolderByType(action, info) {
   const saved = await fileOrganizerService.getSettings();
-  const rootPath = (action && action.rootPath) || info.folder || (saved.settings && saved.settings.folderPath);
+  const rootPath =
+    (action && action.rootPath) || info.folder || (saved.settings && saved.settings.folderPath);
   if (!rootPath) return { ok: false, error: 'Folder is not set.' };
   const settings = {
     ...(saved.settings || {}),
@@ -82,10 +88,20 @@ async function organizeFolderByType(action, info) {
   const scan = await fileOrganizerService.scan(rootPath, settings);
   if (!scan.ok) return { ok: false, error: scan.error };
   if (!scan.items || scan.items.length === 0) {
-    return { ok: true, moved: 0, copied: 0, skipped: scan.skippedFiles || 0, total: 0, message: 'No files to organize.' };
+    return {
+      ok: true,
+      moved: 0,
+      copied: 0,
+      skipped: scan.skippedFiles || 0,
+      total: 0,
+      message: 'No files to organize.',
+    };
   }
   const res = await fileOrganizerService.organize(scan.items, settings);
-  notificationService.notify('Downloads 自動整理', `已整理 ${res.moved || res.copied || 0} 個檔案。`);
+  notificationService.notify(
+    'Downloads 自動整理',
+    `已整理 ${res.moved || res.copied || 0} 個檔案。`,
+  );
   return {
     ok: res.ok,
     moved: res.moved || 0,
@@ -98,7 +114,10 @@ async function organizeFolderByType(action, info) {
 }
 
 async function organizeScreenshotByDate(config, action, info) {
-  const settings = screenshotService.getSettings(config, action && action.settings ? action.settings : {});
+  const settings = screenshotService.getSettings(
+    config,
+    action && action.settings ? action.settings : {},
+  );
   const scan = await screenshotService.scanScreenshots(info.folder, {
     settings: {
       ...settings,
@@ -110,7 +129,9 @@ async function organizeScreenshotByDate(config, action, info) {
   if (!scan.ok) return { ok: false, error: scan.error };
 
   const sourceKey = path.resolve(info.path).toLowerCase();
-  const item = (scan.items || []).find((candidate) => path.resolve(candidate.sourcePath).toLowerCase() === sourceKey);
+  const item = (scan.items || []).find(
+    (candidate) => path.resolve(candidate.sourcePath).toLowerCase() === sourceKey,
+  );
   if (!item) {
     return {
       ok: true,
@@ -131,9 +152,13 @@ async function organizeScreenshotByDate(config, action, info) {
 }
 
 async function organizeScreenshotFolder(config, action, info) {
-  const folder = info.folder || (action && action.rootPath) || screenshotService.getScreenshotsPath(config);
+  const folder =
+    info.folder || (action && action.rootPath) || screenshotService.getScreenshotsPath(config);
   if (!folder) return { ok: false, error: 'Screenshots folder is not set.' };
-  const settings = screenshotService.getSettings(config, action && action.settings ? action.settings : {});
+  const settings = screenshotService.getSettings(
+    config,
+    action && action.settings ? action.settings : {},
+  );
   const scan = await screenshotService.scanScreenshots(folder, {
     settings: {
       ...settings,
@@ -144,7 +169,13 @@ async function organizeScreenshotFolder(config, action, info) {
   });
   if (!scan.ok) return { ok: false, error: scan.error };
   if (!scan.items || scan.items.length === 0) {
-    return { ok: true, moved: 0, skipped: scan.skippedFiles || 0, total: 0, message: 'No screenshots to organize.' };
+    return {
+      ok: true,
+      moved: 0,
+      skipped: scan.skippedFiles || 0,
+      total: 0,
+      message: 'No screenshots to organize.',
+    };
   }
   const res = await screenshotService.organizeScreenshots(scan.items, { settings });
   notificationService.notify('截圖自動整理', `已整理 ${res.moved || 0} 張截圖。`);
@@ -161,7 +192,10 @@ async function organizeScreenshotFolder(config, action, info) {
 async function runCleanupScan(type, notifyTitle) {
   const res = await cleanupService.runAutomationAction(type);
   const size = (res.items || []).reduce((sum, item) => sum + Number(item.size || 0), 0);
-  notificationService.notify('Clean Center', `${notifyTitle}: ${(res.items || []).length} item(s), ${(size / 1024 / 1024).toFixed(1)} MB.`);
+  notificationService.notify(
+    'Clean Center',
+    `${notifyTitle}: ${(res.items || []).length} item(s), ${(size / 1024 / 1024).toFixed(1)} MB.`,
+  );
   return { ok: res.ok, count: (res.items || []).length, size };
 }
 
@@ -177,7 +211,10 @@ async function runAction(action, info, config = {}) {
         return { ok: res.ok, error: res.results && res.results[0] && res.results[0].error };
       }
       case 'notify':
-        notificationService.notify('Automation triggered', `${info.file} matched an automation rule.`);
+        notificationService.notify(
+          'Automation triggered',
+          `${info.file} matched an automation rule.`,
+        );
         return { ok: true };
       case 'openFolder':
         await shell.openPath(info.folder);
@@ -194,12 +231,18 @@ async function runAction(action, info, config = {}) {
         return runCleanupScan('scanCache', 'Browser cache scan');
       case 'cleanupScanLargeFiles': {
         const res = await cleanupService.runAutomationAction('scanLargeFiles');
-        notificationService.notify('Clean Center', `Large file analysis found ${(res.items || []).length} file(s).`);
+        notificationService.notify(
+          'Clean Center',
+          `Large file analysis found ${(res.items || []).length} file(s).`,
+        );
         return { ok: res.ok, count: (res.items || []).length };
       }
       case 'cleanupScanDuplicates': {
         const res = await cleanupService.runAutomationAction('scanDuplicateFiles');
-        notificationService.notify('Clean Center', `Duplicate check found ${(res.groups || []).length} group(s).`);
+        notificationService.notify(
+          'Clean Center',
+          `Duplicate check found ${(res.groups || []).length} group(s).`,
+        );
         return { ok: res.ok, count: (res.groups || []).length };
       }
       case 'cleanupReminder':
@@ -209,19 +252,27 @@ async function runAction(action, info, config = {}) {
         const res = await cleanupService.scan({ settings: { scanDuplicateFiles: false } });
         const safe = (res.items || []).filter((item) => item.selectedDefault);
         const size = safe.reduce((sum, item) => sum + Number(item.size || 0), 0);
-        notificationService.notify('Clean Center 安全掃描', `找到 ${safe.length} 個可安全清理項目，約 ${(size / 1024 / 1024).toFixed(1)} MB。`, {
-          level: safe.length ? 'info' : 'ok',
-          source: 'automation',
-          action: 'cleanup',
-        });
+        notificationService.notify(
+          'Clean Center 安全掃描',
+          `找到 ${safe.length} 個可安全清理項目，約 ${(size / 1024 / 1024).toFixed(1)} MB。`,
+          {
+            level: safe.length ? 'info' : 'ok',
+            source: 'automation',
+            action: 'cleanup',
+          },
+        );
         return { ok: res.ok, count: safe.length, size };
       }
       case 'projectScanReminder':
-        notificationService.notify('Project Hub', '建議重新掃描專案根目錄，確認 Git 狀態與常用專案。', {
-          level: 'info',
-          source: 'automation',
-          action: 'projects',
-        });
+        notificationService.notify(
+          'Project Hub',
+          '建議重新掃描專案根目錄，確認 Git 狀態與常用專案。',
+          {
+            level: 'info',
+            source: 'automation',
+            action: 'projects',
+          },
+        );
         return { ok: true };
       case 'healthGuardCheck':
         notificationService.notify('健康守護', '排程健康檢查已觸發，請到每日工作台查看最新狀態。', {
@@ -232,20 +283,38 @@ async function runAction(action, info, config = {}) {
         return { ok: true };
       case 'cleanupNotifyTempOver': {
         const thresholdMb = Number(action.target || action.thresholdMb || 1024);
-        const res = await cleanupService.runAutomationAction('checkTempSize', { thresholdBytes: thresholdMb * 1024 * 1024 });
-        if (res.exceeded) notificationService.notify('Clean Center', `Temp files exceeded ${thresholdMb} MB. Consider running Clean Center.`);
+        const res = await cleanupService.runAutomationAction('checkTempSize', {
+          thresholdBytes: thresholdMb * 1024 * 1024,
+        });
+        if (res.exceeded)
+          notificationService.notify(
+            'Clean Center',
+            `Temp files exceeded ${thresholdMb} MB. Consider running Clean Center.`,
+          );
         return res;
       }
       case 'cleanupNotifyRecycleOver': {
         const thresholdGb = Number(action.target || action.thresholdGb || 2);
-        const res = await cleanupService.runAutomationAction('checkRecycleBinSize', { thresholdBytes: thresholdGb * 1024 * 1024 * 1024 });
-        if (res.exceeded) notificationService.notify('Clean Center', `Recycle Bin exceeded ${thresholdGb} GB. Consider reviewing it.`);
+        const res = await cleanupService.runAutomationAction('checkRecycleBinSize', {
+          thresholdBytes: thresholdGb * 1024 * 1024 * 1024,
+        });
+        if (res.exceeded)
+          notificationService.notify(
+            'Clean Center',
+            `Recycle Bin exceeded ${thresholdGb} GB. Consider reviewing it.`,
+          );
         return res;
       }
       case 'cleanupNotifyDownloadsCount': {
         const thresholdCount = Number(action.target || action.thresholdCount || 200);
-        const res = await cleanupService.runAutomationAction('checkDownloadsCount', { thresholdCount });
-        if (res.exceeded) notificationService.notify('Clean Center', `Downloads has more than ${thresholdCount} files. Consider organizing it.`);
+        const res = await cleanupService.runAutomationAction('checkDownloadsCount', {
+          thresholdCount,
+        });
+        if (res.exceeded)
+          notificationService.notify(
+            'Clean Center',
+            `Downloads has more than ${thresholdCount} files. Consider organizing it.`,
+          );
         return res;
       }
       default:
@@ -300,7 +369,9 @@ function minutesSinceStartOfDay(date) {
 function parseTimeMinutes(value) {
   const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return 0;
-  return Math.max(0, Math.min(23, Number(match[1]))) * 60 + Math.max(0, Math.min(59, Number(match[2])));
+  return (
+    Math.max(0, Math.min(23, Number(match[1]))) * 60 + Math.max(0, Math.min(59, Number(match[2])))
+  );
 }
 
 function scheduleDue(rule, now = new Date()) {
@@ -329,20 +400,27 @@ function scheduleDue(rule, now = new Date()) {
 }
 
 async function handleSchedules(config) {
-  const rules = list(config).filter((rule) => rule && rule.enabled !== false && rule.condition && rule.condition.type === 'schedule');
+  const rules = list(config).filter(
+    (rule) =>
+      rule && rule.enabled !== false && rule.condition && rule.condition.type === 'schedule',
+  );
   const fired = [];
   for (const rule of rules) {
     if (!scheduleDue(rule)) continue;
     const key = rule.id || rule.name;
     scheduledState.set(key, Date.now());
-    const result = await runAction(rule.action || {}, {
-      file: '',
-      path: '',
-      folder: '',
-      ext: '',
-      size: 0,
-      scheduled: true,
-    }, config);
+    const result = await runAction(
+      rule.action || {},
+      {
+        file: '',
+        path: '',
+        folder: '',
+        ext: '',
+        size: 0,
+        scheduled: true,
+      },
+      config,
+    );
     fired.push({ rule: rule.name, ...result });
   }
   return fired;

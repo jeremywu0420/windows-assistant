@@ -52,9 +52,12 @@ function Shell() {
 
   useEffect(() => {
     if (!window.api?.getSetupStatus) return;
-    window.api.getSetupStatus().then((result) => {
-      if (result?.ok && !result.complete) setPage('setup');
-    }).catch(() => {});
+    window.api
+      .getSetupStatus()
+      .then((result) => {
+        if (result?.ok && !result.complete) setPage('setup');
+      })
+      .catch(() => {});
   }, []);
 
   // Ctrl+K and Ctrl+Alt+Shift+N open the command palette (renderer-side, when focused).
@@ -72,32 +75,55 @@ function Shell() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const navigate = (key) => { setPage(key); setPaletteOpen(false); };
+  const navigate = (key) => {
+    setPage(key);
+    setPaletteOpen(false);
+  };
 
   const renderPage = () => {
     switch (page) {
-      case 'projects': return <Projects onNavigate={navigate} />;
-      case 'modes': return <Modes externalResult={externalModeResult} />;
+      case 'projects':
+        return <Projects onNavigate={navigate} />;
+      case 'modes':
+        return <Modes externalResult={externalModeResult} />;
       case 'files':
-      case 'downloads': return <FileOrganizer />;
-      case 'cleanup': return <CleanCenter />;
-      case 'setup': return <SetupWizard onNavigate={navigate} />;
-      case 'workspaceTemplates': return <WorkspaceTemplates onNavigate={navigate} />;
-      case 'cheatsheet': return <CommandCheatsheet />;
-      case 'toolchain': return <ToolchainDoctor />;
-      case 'eeTools': return <EETools />;
-      case 'embedded': return <EmbeddedLab />;
-      case 'automations': return <Automations />;
-      case 'monitor': return <SystemMonitor onNavigate={navigate} />;
-      case 'screenshots': return <Screenshots />;
-      case 'rules': return <Rules />;
-      case 'security': return <SecurityCenter />;
-      case 'health': return <HealthMonitor />;
-      case 'notifications': return <NotificationCenter onNavigate={navigate} />;
-      case 'history': return <ActivityHistory />;
-      case 'settings': return <Settings />;
+      case 'downloads':
+        return <FileOrganizer />;
+      case 'cleanup':
+        return <CleanCenter />;
+      case 'setup':
+        return <SetupWizard onNavigate={navigate} />;
+      case 'workspaceTemplates':
+        return <WorkspaceTemplates onNavigate={navigate} />;
+      case 'cheatsheet':
+        return <CommandCheatsheet />;
+      case 'toolchain':
+        return <ToolchainDoctor />;
+      case 'eeTools':
+        return <EETools />;
+      case 'embedded':
+        return <EmbeddedLab />;
+      case 'automations':
+        return <Automations />;
+      case 'monitor':
+        return <SystemMonitor onNavigate={navigate} />;
+      case 'screenshots':
+        return <Screenshots />;
+      case 'rules':
+        return <Rules />;
+      case 'security':
+        return <SecurityCenter />;
+      case 'health':
+        return <HealthMonitor />;
+      case 'notifications':
+        return <NotificationCenter onNavigate={navigate} />;
+      case 'history':
+        return <ActivityHistory />;
+      case 'settings':
+        return <Settings />;
       case 'dashboard':
-      default: return <Dashboard onNavigate={navigate} />;
+      default:
+        return <Dashboard onNavigate={navigate} />;
     }
   };
 
@@ -106,14 +132,19 @@ function Shell() {
       <AppShell current={page} onNavigate={navigate} onOpenPalette={() => setPaletteOpen(true)}>
         {renderPage()}
       </AppShell>
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onNavigate={navigate} />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={navigate}
+      />
     </>
   );
 }
 
 export default function App() {
-  const isOverlay = typeof window !== 'undefined'
-    && new URLSearchParams(window.location.search).get('overlay') === '1';
+  const isOverlay =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('overlay') === '1';
 
   if (isOverlay) {
     return <OverlayApp />;

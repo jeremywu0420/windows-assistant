@@ -39,15 +39,23 @@ export default function FileAnalytics({ projects, system, notifications, onNavig
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.pinnedProjects')}</span>
-          <button type="button" onClick={() => onNavigate('projects')}>{t('dashboard.hub')}</button>
+          <button type="button" onClick={() => onNavigate('projects')}>
+            {t('dashboard.hub')}
+          </button>
         </div>
         <div className="project-mini-list">
-          {pinnedProjects.length ? pinnedProjects.map((project) => (
-            <button type="button" key={project.path || project.name} onClick={() => onNavigate('projects')}>
-              <strong>{project.name || 'Project'}</strong>
-              <span>{project.path || t('dashboard.unavailable')}</span>
-            </button>
-          )) : (
+          {pinnedProjects.length ? (
+            pinnedProjects.map((project) => (
+              <button
+                type="button"
+                key={project.path || project.name}
+                onClick={() => onNavigate('projects')}
+              >
+                <strong>{project.name || 'Project'}</strong>
+                <span>{project.path || t('dashboard.unavailable')}</span>
+              </button>
+            ))
+          ) : (
             <div className="dash-empty compact">
               <strong>{t('dashboard.noPinnedProjects')}</strong>
               <span>{t('dashboard.noPinnedProjectsHint')}</span>
@@ -59,7 +67,9 @@ export default function FileAnalytics({ projects, system, notifications, onNavig
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.cpuCoreTemps')}</span>
-          <button type="button" onClick={() => onNavigate('monitor')}>{t('dashboard.open')}</button>
+          <button type="button" onClick={() => onNavigate('monitor')}>
+            {t('dashboard.open')}
+          </button>
         </div>
         {cpuCores.length ? (
           <div className="cpu-core-grid">
@@ -67,7 +77,11 @@ export default function FileAnalytics({ projects, system, notifications, onNavig
               <div
                 className={`cpu-core-tile tone-${tempLevel(core.temperatureC)} ${core.stabilized ? 'is-stabilized' : ''}`}
                 key={core.id || core.name || index}
-                title={core.rawTemperatureC == null ? undefined : `Raw ${formatTemp(core.rawTemperatureC)} / samples ${core.sampleCount || 1}`}
+                title={
+                  core.rawTemperatureC == null
+                    ? undefined
+                    : `Raw ${formatTemp(core.rawTemperatureC)} / samples ${core.sampleCount || 1}`
+                }
               >
                 <span>{core.name || `Core ${index + 1}`}</span>
                 <strong>{formatTemp(core.temperatureC)}</strong>
@@ -86,17 +100,27 @@ export default function FileAnalytics({ projects, system, notifications, onNavig
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.recentActiveProjects')}</span>
-          <button type="button" onClick={() => onNavigate('projects')}>{t('dashboard.hub')}</button>
+          <button type="button" onClick={() => onNavigate('projects')}>
+            {t('dashboard.hub')}
+          </button>
         </div>
         <div className="project-mini-list">
-          {recentProjects.length ? recentProjects.map((project) => (
-            <button type="button" key={project.path || project.name} onClick={() => onNavigate('projects')}>
-              <strong>{project.name}</strong>
-              <span>
-                {project.category || 'Project'} · {project.totalFileCount || project.detectedFileCount || 0} {t('dashboard.files')} · {timeAgo(project.lastModified)}
-              </span>
-            </button>
-          )) : (
+          {recentProjects.length ? (
+            recentProjects.map((project) => (
+              <button
+                type="button"
+                key={project.path || project.name}
+                onClick={() => onNavigate('projects')}
+              >
+                <strong>{project.name}</strong>
+                <span>
+                  {project.category || 'Project'} ·{' '}
+                  {project.totalFileCount || project.detectedFileCount || 0} {t('dashboard.files')}{' '}
+                  · {timeAgo(project.lastModified)}
+                </span>
+              </button>
+            ))
+          ) : (
             <div className="dash-empty compact">
               <strong>{t('dashboard.noProjects')}</strong>
               <span>{t('dashboard.noProjectsHint')}</span>
@@ -108,19 +132,28 @@ export default function FileAnalytics({ projects, system, notifications, onNavig
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.notificationMessages')}</span>
-          <button type="button" onClick={() => onNavigate('notifications')}>{t('dashboard.viewAll')}</button>
+          <button type="button" onClick={() => onNavigate('notifications')}>
+            {t('dashboard.viewAll')}
+          </button>
         </div>
         <div className="notice-list">
-          {notices.length ? notices.map((notice) => (
-            <button type="button" className={`notice-row level-${notice.level || 'info'} ${notice.read ? 'is-read' : ''}`} key={notice.id} onClick={() => onNavigate('notifications')}>
-              <i />
-              <span>
-                <strong>{notice.title || 'PC Life Assistant'}</strong>
-                <em>{notice.body || notice.source || '--'}</em>
-              </span>
-              <time>{timeAgo(notice.time)}</time>
-            </button>
-          )) : (
+          {notices.length ? (
+            notices.map((notice) => (
+              <button
+                type="button"
+                className={`notice-row level-${notice.level || 'info'} ${notice.read ? 'is-read' : ''}`}
+                key={notice.id}
+                onClick={() => onNavigate('notifications')}
+              >
+                <i />
+                <span>
+                  <strong>{notice.title || 'PC Life Assistant'}</strong>
+                  <em>{notice.body || notice.source || '--'}</em>
+                </span>
+                <time>{timeAgo(notice.time)}</time>
+              </button>
+            ))
+          ) : (
             <div className="dash-empty compact">
               <strong>{t('dashboard.noNotifications')}</strong>
               <span>{t('dashboard.noNotificationsHint')}</span>

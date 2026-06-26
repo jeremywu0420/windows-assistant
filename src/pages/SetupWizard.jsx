@@ -127,7 +127,9 @@ export default function SetupWizard({ onNavigate }) {
     return (
       <div>
         <PageHeader title="設定精靈" description="正在讀取你的路徑與監控設定。" />
-        <SectionPanel><div className="skeleton-row" /></SectionPanel>
+        <SectionPanel>
+          <div className="skeleton-row" />
+        </SectionPanel>
       </div>
     );
   }
@@ -140,7 +142,11 @@ export default function SetupWizard({ onNavigate }) {
         eyebrow="SETUP"
         title="設定精靈"
         description="用幾個保守步驟確認常用路徑，讓 App 每天啟動時就能給你正確提醒。"
-        actions={<Button variant="ghost" onClick={() => onNavigate && onNavigate('dashboard')}>稍後設定</Button>}
+        actions={
+          <Button variant="ghost" onClick={() => onNavigate && onNavigate('dashboard')}>
+            稍後設定
+          </Button>
+        }
       />
 
       <div className="setup-steps">
@@ -150,42 +156,62 @@ export default function SetupWizard({ onNavigate }) {
             className={`step-pill ${index === step ? 'active' : ''} ${index < step ? 'done' : ''}`}
             onClick={() => setStep(index)}
           >
-            <span>{index + 1}</span>{item.label}
+            <span>{index + 1}</span>
+            {item.label}
           </button>
         ))}
       </div>
 
-      {error ? <InlineAlert tone="danger" title="儲存失敗">{error}</InlineAlert> : null}
+      {error ? (
+        <InlineAlert tone="danger" title="儲存失敗">
+          {error}
+        </InlineAlert>
+      ) : null}
       {setupStatus && !setupStatus.complete ? (
-        <InlineAlert tone="warn" title="尚未完成初始設定">你仍可直接使用 App；完成精靈後 Dashboard 的提醒會更準確。</InlineAlert>
+        <InlineAlert tone="warn" title="尚未完成初始設定">
+          你仍可直接使用 App；完成精靈後 Dashboard 的提醒會更準確。
+        </InlineAlert>
       ) : null}
 
       {current === 'downloads' ? (
-        <SectionPanel title="確認 Downloads" description="檔案整理與每日工作台會以這個資料夾作為主要來源。">
+        <SectionPanel
+          title="確認 Downloads"
+          description="檔案整理與每日工作台會以這個資料夾作為主要來源。"
+        >
           <PathPickerRow
             label="Downloads 資料夾"
             description="建議使用 Windows 預設下載資料夾，或你實際存放下載檔案的位置。"
             value={general.downloadsPath}
             onChange={(value) => updateGeneral({ downloadsPath: value })}
             onDetect={detectDownloads}
-            onPick={() => pickFolder('選擇 Downloads 資料夾', (path) => updateGeneral({ downloadsPath: path }))}
+            onPick={() =>
+              pickFolder('選擇 Downloads 資料夾', (path) => updateGeneral({ downloadsPath: path }))
+            }
           />
         </SectionPanel>
       ) : null}
 
       {current === 'screenshots' ? (
-        <SectionPanel title="確認 Screenshots" description="截圖整理會掃描此資料夾，並依日期與類別整理。">
+        <SectionPanel
+          title="確認 Screenshots"
+          description="截圖整理會掃描此資料夾，並依日期與類別整理。"
+        >
           <PathPickerRow
             label="Screenshots 資料夾"
             value={general.screenshotsPath}
             onChange={(value) => updateGeneral({ screenshotsPath: value })}
-            onPick={() => pickFolder('選擇截圖資料夾', (path) => updateGeneral({ screenshotsPath: path }))}
+            onPick={() =>
+              pickFolder('選擇截圖資料夾', (path) => updateGeneral({ screenshotsPath: path }))
+            }
           />
         </SectionPanel>
       ) : null}
 
       {current === 'vscode' ? (
-        <SectionPanel title="偵測 VS Code" description="Project Hub 會用這個路徑開啟專案；找不到時可以稍後設定。">
+        <SectionPanel
+          title="偵測 VS Code"
+          description="Project Hub 會用這個路徑開啟專案；找不到時可以稍後設定。"
+        >
           <PathPickerRow
             label="Code.exe"
             value={general.vscodePath}
@@ -200,22 +226,46 @@ export default function SetupWizard({ onNavigate }) {
         <SectionPanel
           title="選擇專案掃描根目錄"
           description="Project Hub 只會掃描這些根目錄，並套用排除清單與深度設定。"
-          actions={<Button size="sm" onClick={() => pickFolder('加入專案掃描根目錄', (path) => updateProjectHub({ scanRoots: upsertRoot(projectRoots, path) }))}>加入資料夾</Button>}
+          actions={
+            <Button
+              size="sm"
+              onClick={() =>
+                pickFolder('加入專案掃描根目錄', (path) =>
+                  updateProjectHub({ scanRoots: upsertRoot(projectRoots, path) }),
+                )
+              }
+            >
+              加入資料夾
+            </Button>
+          }
         >
           <div className="path-list">
             {projectRoots.map((root) => (
               <div className="path-list-row" key={root}>
                 <span>{root}</span>
-                <Button size="sm" variant="ghost" onClick={() => updateProjectHub({ scanRoots: projectRoots.filter((item) => item !== root) })}>移除</Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    updateProjectHub({ scanRoots: projectRoots.filter((item) => item !== root) })
+                  }
+                >
+                  移除
+                </Button>
               </div>
             ))}
-            {projectRoots.length === 0 ? <InlineAlert tone="info">可以先跳過，之後從 Project Hub 再加入。</InlineAlert> : null}
+            {projectRoots.length === 0 ? (
+              <InlineAlert tone="info">可以先跳過，之後從 Project Hub 再加入。</InlineAlert>
+            ) : null}
           </div>
         </SectionPanel>
       ) : null}
 
       {current === 'monitor' ? (
-        <SectionPanel title="啟用監控" description="監控會在背景追蹤資料夾變化與自動化狀態；可以隨時暫停。">
+        <SectionPanel
+          title="啟用監控"
+          description="監控會在背景追蹤資料夾變化與自動化狀態；可以隨時暫停。"
+        >
           <label className="toggle-row">
             <input
               type="checkbox"
@@ -245,12 +295,27 @@ export default function SetupWizard({ onNavigate }) {
       ) : null}
 
       <div className="wizard-actions">
-        <Button variant="ghost" disabled={step === 0} onClick={() => setStep((value) => Math.max(0, value - 1))}>上一步</Button>
-        <Button onClick={() => save(false)} busy={saving}>儲存目前設定</Button>
+        <Button
+          variant="ghost"
+          disabled={step === 0}
+          onClick={() => setStep((value) => Math.max(0, value - 1))}
+        >
+          上一步
+        </Button>
+        <Button onClick={() => save(false)} busy={saving}>
+          儲存目前設定
+        </Button>
         {step < STEPS.length - 1 ? (
-          <Button variant="primary" onClick={() => setStep((value) => Math.min(STEPS.length - 1, value + 1))}>下一步</Button>
+          <Button
+            variant="primary"
+            onClick={() => setStep((value) => Math.min(STEPS.length - 1, value + 1))}
+          >
+            下一步
+          </Button>
         ) : (
-          <Button variant="primary" onClick={() => save(true)} busy={saving}>完成設定</Button>
+          <Button variant="primary" onClick={() => save(true)} busy={saving}>
+            完成設定
+          </Button>
         )}
       </div>
     </div>

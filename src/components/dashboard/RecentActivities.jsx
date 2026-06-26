@@ -18,7 +18,9 @@ export default function RecentActivities({ activities = [], onNavigate }) {
     <section className="glass-card dashboard-panel">
       <div className="panel-heading">
         <span>{t('dashboard.recentActivities')}</span>
-        <button type="button" onClick={() => onNavigate('history')}>{t('dashboard.viewAll')}</button>
+        <button type="button" onClick={() => onNavigate('history')}>
+          {t('dashboard.viewAll')}
+        </button>
       </div>
       {rows.length ? (
         <div className="activity-list">
@@ -27,7 +29,15 @@ export default function RecentActivities({ activities = [], onNavigate }) {
               type="button"
               className="activity-row"
               key={activity.id}
-              onClick={() => onNavigate(activity.type === 'cleanup' ? 'cleanup' : activity.type === 'downloads' ? 'files' : 'history')}
+              onClick={() =>
+                onNavigate(
+                  activity.type === 'cleanup'
+                    ? 'cleanup'
+                    : activity.type === 'downloads'
+                      ? 'files'
+                      : 'history',
+                )
+              }
             >
               <span className={`activity-dot type-${activity.type}`} />
               <span>

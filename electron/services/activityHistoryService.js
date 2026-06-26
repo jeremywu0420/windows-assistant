@@ -56,10 +56,14 @@ async function listHistory() {
       id: log.id || `cleanup-${log.time}-${log.filePath}`,
       time: log.time,
       type: 'cleanup',
-      title: log.action === 'clean-summary' ? 'Clean Center 清理摘要' : `Clean Center ${log.category || ''}`,
-      summary: log.action === 'clean-summary'
-        ? `釋放 ${(Number(log.fileSize || 0) / 1024 / 1024).toFixed(1)} MB`
-        : `${log.result || 'ok'} ${log.fileName || path.basename(log.filePath || '')}`,
+      title:
+        log.action === 'clean-summary'
+          ? 'Clean Center 清理摘要'
+          : `Clean Center ${log.category || ''}`,
+      summary:
+        log.action === 'clean-summary'
+          ? `釋放 ${(Number(log.fileSize || 0) / 1024 / 1024).toFixed(1)} MB`
+          : `${log.result || 'ok'} ${log.fileName || path.basename(log.filePath || '')}`,
       count: log.details?.successCount || 1,
       restorable: false,
       details: log,
@@ -80,7 +84,11 @@ async function listHistory() {
   }
 
   rows.sort((a, b) => asTime(b.time) - asTime(a.time));
-  return { ok: true, rows: rows.slice(0, 250), downloadsHistoryPath: downloads.path || fileOrganizerService.historyPath() };
+  return {
+    ok: true,
+    rows: rows.slice(0, 250),
+    downloadsHistoryPath: downloads.path || fileOrganizerService.historyPath(),
+  };
 }
 
 async function restoreDownloadsLast() {

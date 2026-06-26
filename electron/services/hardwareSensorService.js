@@ -24,7 +24,7 @@ function execPowerShell(script, timeout = 3500) {
         } catch (_) {
           resolve(null);
         }
-      }
+      },
     );
   });
 }
@@ -52,7 +52,7 @@ function execNvidiaSmi() {
             };
           });
         resolve(rows);
-      }
+      },
     );
   });
 }
@@ -66,16 +66,22 @@ function findCoreTempExe() {
   const candidates = [
     'C:\\Program Files\\Core Temp\\Core Temp.exe',
     'C:\\Program Files (x86)\\Core Temp\\Core Temp.exe',
-    process.env.ProgramFiles ? path.join(process.env.ProgramFiles, 'Core Temp', 'Core Temp.exe') : '',
-    process.env['ProgramFiles(x86)'] ? path.join(process.env['ProgramFiles(x86)'], 'Core Temp', 'Core Temp.exe') : '',
+    process.env.ProgramFiles
+      ? path.join(process.env.ProgramFiles, 'Core Temp', 'Core Temp.exe')
+      : '',
+    process.env['ProgramFiles(x86)']
+      ? path.join(process.env['ProgramFiles(x86)'], 'Core Temp', 'Core Temp.exe')
+      : '',
   ].filter(Boolean);
-  return candidates.find((candidate) => {
-    try {
-      return fs.existsSync(candidate);
-    } catch (_) {
-      return false;
-    }
-  }) || null;
+  return (
+    candidates.find((candidate) => {
+      try {
+        return fs.existsSync(candidate);
+      } catch (_) {
+        return false;
+      }
+    }) || null
+  );
 }
 
 async function launchCoreTempOnce() {
@@ -224,7 +230,12 @@ try { Add-Type -TypeDefinition $code -ErrorAction Stop | Out-Null } catch {}
   if (!result || !result.ok || !Array.isArray(result.temps)) return [];
   const packagePowerWatts = coreTempPackagePower(result);
   return result.temps
-    .filter((item) => Number.isFinite(Number(item.temperatureC)) && Number(item.temperatureC) > 0 && Number(item.temperatureC) < 130)
+    .filter(
+      (item) =>
+        Number.isFinite(Number(item.temperatureC)) &&
+        Number(item.temperatureC) > 0 &&
+        Number(item.temperatureC) < 130,
+    )
     .map((item) => ({
       id: `coretemp-core-${item.index}`,
       name: `Core ${Number(item.index) + 1}`,
@@ -288,12 +299,11 @@ function stableCoreTemperatures(cpuCores) {
 
     const current = cpuTemperatureHistory.get(key) || [];
     current.push({ at: now, value: raw });
-    const recent = current
-      .filter((item) => now - item.at <= 30000)
-      .slice(-CPU_TEMP_HISTORY_LIMIT);
+    const recent = current.filter((item) => now - item.at <= 30000).slice(-CPU_TEMP_HISTORY_LIMIT);
     cpuTemperatureHistory.set(key, recent);
 
-    const stable = recent.length >= 3 ? normalizeTemp(median(recent.map((item) => item.value))) : raw;
+    const stable =
+      recent.length >= 3 ? normalizeTemp(median(recent.map((item) => item.value))) : raw;
     return {
       ...sensor,
       rawTemperatureC: raw,
@@ -437,59 +447,81 @@ function preferredCpuSensors(sensors, limit = 10) {
 
 function preferredGpuSensors(sensors, nvidiaRows) {
   const fromMonitor = sensors.filter((sensor) => sensor.kind === 'gpu');
-  const fromNvidia = nvidiaRows.map((row) => ({
-    id: row.id,
-    name: row.name,
-    hardware: row.name,
-    temperatureC: row.temperatureC,
-    kind: 'gpu',
-    source: row.source,
-  })).filter((row) => row.temperatureC != null);
+  const fromNvidia = nvidiaRows
+    .map((row) => ({
+      id: row.id,
+      name: row.name,
+      hardware: row.name,
+      temperatureC: row.temperatureC,
+      kind: 'gpu',
+      source: row.source,
+    }))
+    .filter((row) => row.temperatureC != null);
   return [...fromNvidia, ...fromMonitor].slice(0, 6);
 }
 
 function preferredCpuPower(powerSensors) {
   const cpuPowerSensors = powerSensors.filter((sensor) => sensor.kind === 'cpu');
-  const preferred = cpuPowerSensors.find((sensor) => /package|total|cpu/i.test(sensor.name))
-    || cpuPowerSensors[0]
-    || null;
-  return preferred ? {
-    powerWatts: preferred.powerWatts,
-    source: preferred.source,
-    name: preferred.name,
-  } : null;
+  const preferred =
+    cpuPowerSensors.find((sensor) => /package|total|cpu/i.test(sensor.name)) ||
+    cpuPowerSensors[0] ||
+    null;
+  return preferred
+    ? {
+        powerWatts: preferred.powerWatts,
+        source: preferred.source,
+        name: preferred.name,
+      }
+    : null;
 }
 
 async function readTemperaturesFresh() {
-  const [coreTempSensors, monitorSensors, monitorPowerSensors, thermalZones, nvidiaRows] = await Promise.all([
-    readCoreTempSharedMemory(),
-    readHardwareMonitorWmi(),
-    readHardwareMonitorPowerWmi(),
-    readThermalZoneWmi(),
-    execNvidiaSmi(),
-  ]);
+  const [coreTempSensors, monitorSensors, monitorPowerSensors, thermalZones, nvidiaRows] =
+    await Promise.all([
+      readCoreTempSharedMemory(),
+      readHardwareMonitorWmi(),
+      readHardwareMonitorPowerWmi(),
+      readThermalZoneWmi(),
+      execNvidiaSmi(),
+    ]);
   const sensors = [...monitorSensors, ...thermalZones];
-  const rawCpuCores = coreTempSensors.length ? coreTempSensors.slice(0, 10) : preferredCpuSensors(sensors, 10);
+  const rawCpuCores = coreTempSensors.length
+    ? coreTempSensors.slice(0, 10)
+    : preferredCpuSensors(sensors, 10);
   const cpuCores = stableCoreTemperatures(rawCpuCores);
   const gpu = preferredGpuSensors(sensors, nvidiaRows);
-  const coreTempPowerWatts = coreTempSensors.find((sensor) => sensor.packagePowerWatts != null)?.packagePowerWatts ?? null;
+  const coreTempPowerWatts =
+    coreTempSensors.find((sensor) => sensor.packagePowerWatts != null)?.packagePowerWatts ?? null;
   const monitorCpuPower = preferredCpuPower(monitorPowerSensors);
-  const cpuPower = coreTempPowerWatts != null
-    ? { powerWatts: coreTempPowerWatts, source: 'Core Temp', name: 'CPU Package Power' }
-    : monitorCpuPower;
+  const cpuPower =
+    coreTempPowerWatts != null
+      ? { powerWatts: coreTempPowerWatts, source: 'Core Temp', name: 'CPU Package Power' }
+      : monitorCpuPower;
   return {
     ok: cpuCores.length > 0 || gpu.length > 0 || thermalZones.length > 0,
     cpuCores,
-    cpuTemperatureSource: coreTempSensors.length ? 'Core Temp' : (cpuCores[0] ? cpuCores[0].source : ''),
+    cpuTemperatureSource: coreTempSensors.length
+      ? 'Core Temp'
+      : cpuCores[0]
+        ? cpuCores[0].source
+        : '',
     cpuPowerWatts: cpuPower ? cpuPower.powerWatts : null,
     cpuPowerSource: cpuPower ? cpuPower.source : '',
     cpuPowerSensors: monitorPowerSensors.filter((sensor) => sensor.kind === 'cpu').slice(0, 8),
     gpu,
     thermalZones,
-    sources: Array.from(new Set([...coreTempSensors.map((item) => item.source), ...sensors.map((item) => item.source), ...monitorPowerSensors.map((item) => item.source), ...nvidiaRows.map((item) => item.source)])),
-    message: cpuCores.length || gpu.length
-      ? ''
-      : '未偵測到 CPU/GPU 溫度。若要顯示每核心溫度，請保持 Core Temp 執行，或執行 LibreHardwareMonitor / OpenHardwareMonitor。',
+    sources: Array.from(
+      new Set([
+        ...coreTempSensors.map((item) => item.source),
+        ...sensors.map((item) => item.source),
+        ...monitorPowerSensors.map((item) => item.source),
+        ...nvidiaRows.map((item) => item.source),
+      ]),
+    ),
+    message:
+      cpuCores.length || gpu.length
+        ? ''
+        : '未偵測到 CPU/GPU 溫度。若要顯示每核心溫度，請保持 Core Temp 執行，或執行 LibreHardwareMonitor / OpenHardwareMonitor。',
   };
 }
 

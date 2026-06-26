@@ -9,7 +9,9 @@ function unavailable(error: string) {
 
 export async function getSecurityStatus() {
   if (!window.api?.security?.getStatus) {
-    return unavailable('Security Center IPC is unavailable. Start the Electron app to read Windows security data.');
+    return unavailable(
+      'Security Center IPC is unavailable. Start the Electron app to read Windows security data.',
+    );
   }
   return window.api.security.getStatus();
 }

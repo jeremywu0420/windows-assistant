@@ -32,7 +32,9 @@ const SORTS = [
 ];
 
 function normalizePath(value) {
-  return String(value || '').trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 function projectTone(project) {
@@ -67,11 +69,17 @@ function sortProjects(items, sortKey, workspacePaths) {
 
     if (sortKey === 'name') return String(a.name).localeCompare(String(b.name), 'zh-Hant');
     if (sortKey === 'category') {
-      const byCategory = String(a.category || '').localeCompare(String(b.category || ''), 'zh-Hant');
+      const byCategory = String(a.category || '').localeCompare(
+        String(b.category || ''),
+        'zh-Hant',
+      );
       return byCategory || String(a.name).localeCompare(String(b.name), 'zh-Hant');
     }
-    if (sortKey === 'modified') return Date.parse(b.lastModified || 0) - Date.parse(a.lastModified || 0);
-    return (b.weight || 0) - (a.weight || 0) || String(a.name).localeCompare(String(b.name), 'zh-Hant');
+    if (sortKey === 'modified')
+      return Date.parse(b.lastModified || 0) - Date.parse(a.lastModified || 0);
+    return (
+      (b.weight || 0) - (a.weight || 0) || String(a.name).localeCompare(String(b.name), 'zh-Hant')
+    );
   });
   return sorted;
 }
@@ -140,7 +148,9 @@ export default function Projects({ onNavigate }) {
   useEffect(() => {
     load();
     const id = setInterval(() => {
-      window.api?.getProjectScanStatus?.().then((result) => result.ok && setScanStatus(result.status));
+      window.api
+        ?.getProjectScanStatus?.()
+        .then((result) => result.ok && setScanStatus(result.status));
     }, 2500);
     return () => clearInterval(id);
   }, [load]);
@@ -148,17 +158,20 @@ export default function Projects({ onNavigate }) {
   const workspaceProjects = hub?.pinnedProjects || [];
   const workspacePaths = useMemo(
     () => new Set(workspaceProjects.map((item) => normalizePath(item.path))),
-    [workspaceProjects]
+    [workspaceProjects],
   );
   const selectedPathSet = useMemo(() => new Set(selectedPaths), [selectedPaths]);
 
-  const stats = useMemo(() => ({
-    total: projects.length,
-    workspace: workspaceProjects.length,
-    git: projects.filter((project) => project.isGitRepo).length,
-    dirty: projects.filter((project) => project.modifiedCount > 0).length,
-    missing: projects.filter((project) => !project.exists).length,
-  }), [projects, workspaceProjects.length]);
+  const stats = useMemo(
+    () => ({
+      total: projects.length,
+      workspace: workspaceProjects.length,
+      git: projects.filter((project) => project.isGitRepo).length,
+      dirty: projects.filter((project) => project.modifiedCount > 0).length,
+      missing: projects.filter((project) => !project.exists).length,
+    }),
+    [projects, workspaceProjects.length],
+  );
 
   const categories = useMemo(() => {
     const counts = new Map();
@@ -179,10 +192,14 @@ export default function Projects({ onNavigate }) {
         ...(project.tags || []),
         ...(project.filterCategories || []),
         ...(project.sourceSample || []),
-      ].join(' ').toLowerCase();
-      return (!text || haystack.includes(text)) &&
+      ]
+        .join(' ')
+        .toLowerCase();
+      return (
+        (!text || haystack.includes(text)) &&
         matchesStatus(project, statusFilter, workspacePaths) &&
-        (categoryFilter === 'all' || project.category === categoryFilter);
+        (categoryFilter === 'all' || project.category === categoryFilter)
+      );
     });
     return sortProjects(result, sortKey, workspacePaths);
   }, [projects, query, statusFilter, categoryFilter, sortKey, workspacePaths]);
@@ -192,7 +209,9 @@ export default function Projects({ onNavigate }) {
   }, [projects, selectedPathSet]);
 
   const modeNameValue = modeNameDraft || suggestedModeName(selectedProjects);
-  const selectedWorkspaceCount = selectedProjects.filter((project) => workspacePaths.has(normalizePath(project.path))).length;
+  const selectedWorkspaceCount = selectedProjects.filter((project) =>
+    workspacePaths.has(normalizePath(project.path)),
+  ).length;
   const selectedNewCount = selectedProjects.length - selectedWorkspaceCount;
 
   const saveHub = async (patch) => {
@@ -205,9 +224,9 @@ export default function Projects({ onNavigate }) {
 
   const toggleSelected = (project) => {
     const key = normalizePath(project.path);
-    setSelectedPaths((current) => (
-      current.includes(key) ? current.filter((item) => item !== key) : [...current, key]
-    ));
+    setSelectedPaths((current) =>
+      current.includes(key) ? current.filter((item) => item !== key) : [...current, key],
+    );
   };
 
   const selectVisible = () => {
@@ -263,7 +282,9 @@ export default function Projects({ onNavigate }) {
     const general = settings.general || {};
     const modeName = uniqueModeName((modeNameValue || 'Project Hub 工作模式').trim(), modes);
     const vscodePath = general.vscodePath || 'Code.exe';
-    const projectPaths = Array.from(new Set(existingProjects.map((project) => project.path).filter(Boolean)));
+    const projectPaths = Array.from(
+      new Set(existingProjects.map((project) => project.path).filter(Boolean)),
+    );
 
     const mode = {
       name: modeName,
@@ -313,11 +334,17 @@ export default function Projects({ onNavigate }) {
       load();
       return;
     }
-    toast(result.ok ? result.message || '操作完成' : result.error || '操作失敗', result.ok ? 'ok' : 'error');
+    toast(
+      result.ok ? result.message || '操作完成' : result.error || '操作失敗',
+      result.ok ? 'ok' : 'error',
+    );
   };
 
   const addRoot = async () => {
-    const picked = await window.api.pickPath({ type: 'folder', title: '加入 Project Hub 掃描根目錄' });
+    const picked = await window.api.pickPath({
+      type: 'folder',
+      title: '加入 Project Hub 掃描根目錄',
+    });
     if (!picked.ok) return;
     const result = await window.api.addProjectScanRoot(picked.path);
     toast(result.ok ? '已加入掃描根目錄' : result.error || '加入失敗', result.ok ? 'ok' : 'error');
@@ -336,34 +363,51 @@ export default function Projects({ onNavigate }) {
         eyebrow="WORKSPACE"
         title="Project Hub"
         description="掃描常用資料夾裡的專案，選取後可加入每日工作區，也可以直接開 VS Code、Terminal、Dev 或檢查 Git。"
-        actions={(
+        actions={
           <>
             <StatusBadge tone="muted">{stats.total} 個專案</StatusBadge>
             <StatusBadge tone="ok">{stats.workspace} 個工作區</StatusBadge>
             <StatusBadge tone="ok">{stats.git} 個 Git repo</StatusBadge>
             {stats.dirty ? <StatusBadge tone="warn">{stats.dirty} 個有變更</StatusBadge> : null}
-            <Button variant="ghost" onClick={() => onNavigate && onNavigate('workspaceTemplates')}>建立新工作區</Button>
-            <Button variant="primary" onClick={load} busy={loading}>重新掃描</Button>
+            <Button variant="ghost" onClick={() => onNavigate && onNavigate('workspaceTemplates')}>
+              建立新工作區
+            </Button>
+            <Button variant="primary" onClick={load} busy={loading}>
+              重新掃描
+            </Button>
           </>
-        )}
+        }
       />
 
-      {error ? <InlineAlert tone="danger" title="讀取失敗">{error}</InlineAlert> : null}
+      {error ? (
+        <InlineAlert tone="danger" title="讀取失敗">
+          {error}
+        </InlineAlert>
+      ) : null}
       {scanStatus?.active ? (
         <InlineAlert tone="info" title="正在掃描">
-          {scanStatus.message || 'Project Hub 正在讀取資料夾'}，根目錄 {scanStatus.scannedRoots}/{scanStatus.totalRoots}
+          {scanStatus.message || 'Project Hub 正在讀取資料夾'}，根目錄 {scanStatus.scannedRoots}/
+          {scanStatus.totalRoots}
         </InlineAlert>
       ) : null}
 
       <SectionPanel
         title="掃描設定"
         description="調整 Project Hub 會搜尋的根目錄與掃描深度。掃描深度越高，找到的子資料夾越多，但也會更慢。"
-        actions={(
+        actions={
           <>
-            <Button size="sm" onClick={addRoot}>加入根目錄</Button>
-            <Button size="sm" variant="ghost" onClick={() => window.api.cancelProjectScan().then(load)}>取消掃描</Button>
+            <Button size="sm" onClick={addRoot}>
+              加入根目錄
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => window.api.cancelProjectScan().then(load)}
+            >
+              取消掃描
+            </Button>
           </>
-        )}
+        }
       >
         <div className="settings-grid">
           <div>
@@ -372,7 +416,9 @@ export default function Projects({ onNavigate }) {
               {(hub?.scanRoots || []).map((root) => (
                 <div className="path-list-row" key={root}>
                   <span>{root}</span>
-                  <Button size="sm" variant="ghost" onClick={() => removeRoot(root)}>移除</Button>
+                  <Button size="sm" variant="ghost" onClick={() => removeRoot(root)}>
+                    移除
+                  </Button>
                 </div>
               ))}
             </div>
@@ -394,7 +440,11 @@ export default function Projects({ onNavigate }) {
       <SectionPanel
         title="專案瀏覽"
         description="勾選 Project Hub 裡的專案後按加入工作區。已加入的專案會固定在最上方，並出現在每日工作台。"
-        actions={<StatusBadge tone="muted">顯示 {filteredProjects.length} / {projects.length}</StatusBadge>}
+        actions={
+          <StatusBadge tone="muted">
+            顯示 {filteredProjects.length} / {projects.length}
+          </StatusBadge>
+        }
       >
         <div className="project-toolbar">
           <input
@@ -403,8 +453,16 @@ export default function Projects({ onNavigate }) {
             placeholder="搜尋名稱、路徑、類型、檔案..."
             onChange={(event) => setQuery(event.target.value)}
           />
-          <select className="path-input compact-select" value={sortKey} onChange={(event) => setSortKey(event.target.value)}>
-            {SORTS.map((sort) => <option key={sort.key} value={sort.key}>{sort.label}</option>)}
+          <select
+            className="path-input compact-select"
+            value={sortKey}
+            onChange={(event) => setSortKey(event.target.value)}
+          >
+            {SORTS.map((sort) => (
+              <option key={sort.key} value={sort.key}>
+                {sort.label}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -412,27 +470,59 @@ export default function Projects({ onNavigate }) {
           <div>
             <strong>{selectedProjects.length}</strong>
             <span> 個已選取</span>
-            {selectedProjects.length ? <em>{selectedNewCount} 個可加入，{selectedWorkspaceCount} 個已在工作區</em> : null}
+            {selectedProjects.length ? (
+              <em>
+                {selectedNewCount} 個可加入，{selectedWorkspaceCount} 個已在工作區
+              </em>
+            ) : null}
           </div>
           <input
             className="mode-name-input"
             value={modeNameDraft}
             onChange={(event) => setModeNameDraft(event.target.value)}
-            placeholder={selectedProjects.length ? suggestedModeName(selectedProjects) : '工作模式名稱（選取專案後可填）'}
+            placeholder={
+              selectedProjects.length
+                ? suggestedModeName(selectedProjects)
+                : '工作模式名稱（選取專案後可填）'
+            }
             disabled={!selectedProjects.length}
           />
           <div className="head-actions">
-            <Button size="sm" onClick={selectVisible} disabled={!filteredProjects.length}>全選目前清單</Button>
-            <Button size="sm" variant="primary" onClick={() => addProjectsToWorkspace(selectedProjects)} disabled={!selectedProjects.length || selectedNewCount === 0}>
+            <Button size="sm" onClick={selectVisible} disabled={!filteredProjects.length}>
+              全選目前清單
+            </Button>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={() => addProjectsToWorkspace(selectedProjects)}
+              disabled={!selectedProjects.length || selectedNewCount === 0}
+            >
               加入工作區
             </Button>
-            <Button size="sm" variant="primary" onClick={createModeFromSelected} disabled={!selectedProjects.length}>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={createModeFromSelected}
+              disabled={!selectedProjects.length}
+            >
               建立工作模式
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => removeProjectsFromWorkspace(selectedProjects)} disabled={!selectedWorkspaceCount}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => removeProjectsFromWorkspace(selectedProjects)}
+              disabled={!selectedWorkspaceCount}
+            >
               從工作區移除
             </Button>
-            <Button size="sm" variant="ghost" onClick={clearSelection} disabled={!selectedProjects.length}>清除選取</Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={clearSelection}
+              disabled={!selectedProjects.length}
+            >
+              清除選取
+            </Button>
           </div>
         </div>
 
@@ -450,7 +540,11 @@ export default function Projects({ onNavigate }) {
         </div>
 
         <div className="category-strip">
-          <button type="button" className={`category-chip ${categoryFilter === 'all' ? 'active' : ''}`} onClick={() => setCategoryFilter('all')}>
+          <button
+            type="button"
+            className={`category-chip ${categoryFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setCategoryFilter('all')}
+          >
             全部類型
           </button>
           {categories.map(([category, count]) => (
@@ -460,23 +554,34 @@ export default function Projects({ onNavigate }) {
               className={`category-chip ${categoryFilter === category ? 'active' : ''}`}
               onClick={() => setCategoryFilter(category)}
             >
-              {category}<span>{count}</span>
+              {category}
+              <span>{count}</span>
             </button>
           ))}
         </div>
 
         {filteredProjects.length === 0 ? (
-          <EmptyState title="沒有符合條件的專案" description="試著放寬搜尋、切換篩選，或新增掃描根目錄。" />
+          <EmptyState
+            title="沒有符合條件的專案"
+            description="試著放寬搜尋、切換篩選，或新增掃描根目錄。"
+          />
         ) : (
           <div className="project-card-list">
             {filteredProjects.map((project) => {
               const inWorkspace = workspacePaths.has(normalizePath(project.path));
               const selected = selectedPathSet.has(normalizePath(project.path));
               return (
-                <article className={`project-card ${inWorkspace ? 'pinned' : ''} ${selected ? 'selected' : ''}`} key={project.path}>
+                <article
+                  className={`project-card ${inWorkspace ? 'pinned' : ''} ${selected ? 'selected' : ''}`}
+                  key={project.path}
+                >
                   <div className="project-card-main">
                     <label className="project-select" title="選取專案">
-                      <input type="checkbox" checked={selected} onChange={() => toggleSelected(project)} />
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => toggleSelected(project)}
+                      />
                     </label>
                     <button
                       type="button"
@@ -486,12 +591,18 @@ export default function Projects({ onNavigate }) {
                     >
                       {inWorkspace ? '已加入' : '加入'}
                     </button>
-                    <div className="project-avatar">{String(project.name || '?').slice(0, 2).toUpperCase()}</div>
+                    <div className="project-avatar">
+                      {String(project.name || '?')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
                     <div className="project-card-copy">
                       <div className="project-card-head">
                         <h3>{project.name}</h3>
                         {inWorkspace ? <StatusBadge tone="ok">工作區</StatusBadge> : null}
-                        <StatusBadge tone={projectTone(project)}>{projectLabel(project)}</StatusBadge>
+                        <StatusBadge tone={projectTone(project)}>
+                          {projectLabel(project)}
+                        </StatusBadge>
                       </div>
                       <div className="project-path">{project.path}</div>
                       <div className="project-tags">
@@ -504,9 +615,18 @@ export default function Projects({ onNavigate }) {
                   </div>
 
                   <div className="project-card-meta">
-                    <div><strong>{project.detectedFileCount ?? '--'}</strong><span>偵測檔案</span></div>
-                    <div><strong>{project.totalFileCount ?? '--'}</strong><span>總檔案</span></div>
-                    <div><strong>{formatDate(project.lastModified)}</strong><span>最後修改</span></div>
+                    <div>
+                      <strong>{project.detectedFileCount ?? '--'}</strong>
+                      <span>偵測檔案</span>
+                    </div>
+                    <div>
+                      <strong>{project.totalFileCount ?? '--'}</strong>
+                      <span>總檔案</span>
+                    </div>
+                    <div>
+                      <strong>{formatDate(project.lastModified)}</strong>
+                      <span>最後修改</span>
+                    </div>
                   </div>
 
                   <div className="project-card-actions">

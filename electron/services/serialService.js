@@ -40,8 +40,12 @@ ConvertTo-Json -Compress -InputObject $out
   });
 }
 
-function isValidPort(p) { return /^COM\d+$/i.test(String(p || '')); }
-function isValidBaud(b) { return Number.isInteger(Number(b)) && Number(b) > 0 && Number(b) <= 2000000; }
+function isValidPort(p) {
+  return /^COM\d+$/i.test(String(p || ''));
+}
+function isValidBaud(b) {
+  return Number.isInteger(Number(b)) && Number(b) > 0 && Number(b) <= 2000000;
+}
 
 // Open a port and stream data via onData({ stream, text }). Returns immediately.
 function openPort({ port, baud }, onData) {
@@ -89,7 +93,11 @@ while ($true) {
 
 function closePort() {
   if (activeProc) {
-    try { activeProc.kill(); } catch (_) { /* ignore */ }
+    try {
+      activeProc.kill();
+    } catch (_) {
+      /* ignore */
+    }
     activeProc = null;
     return { ok: true };
   }

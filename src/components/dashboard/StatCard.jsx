@@ -47,9 +47,10 @@ export default function StatCard({
 }) {
   const numeric = typeof value === 'number' && format !== 'bytes';
   const display = useCountUp(numeric ? value : 0);
-  const shown = useMemo(() => (
-    numeric ? formatValue(display, format) : formatValue(value, format)
-  ), [display, format, numeric, value]);
+  const shown = useMemo(
+    () => (numeric ? formatValue(display, format) : formatValue(value, format)),
+    [display, format, numeric, value],
+  );
 
   return (
     <button
@@ -58,10 +59,16 @@ export default function StatCard({
       onClick={onClick}
       disabled={!onClick}
     >
-      <span className="dash-stat-icon" aria-hidden="true">{icon}</span>
+      <span className="dash-stat-icon" aria-hidden="true">
+        {icon}
+      </span>
       <span className="dash-stat-copy">
         <span className="dash-stat-label">{label}</span>
-        {loading ? <span className="dash-skeleton dash-skeleton-value" /> : <strong>{shown}</strong>}
+        {loading ? (
+          <span className="dash-skeleton dash-skeleton-value" />
+        ) : (
+          <strong>{shown}</strong>
+        )}
         {sub ? <span>{sub}</span> : null}
       </span>
     </button>

@@ -35,12 +35,58 @@ const SKIP_DIRS = new Set([
 ]);
 
 const EXT_GROUPS = {
-  Documents: new Set(['.doc', '.docx', '.pdf', '.txt', '.md', '.rtf', '.ppt', '.pptx', '.xls', '.xlsx', '.csv']),
-  Images: new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.tif', '.tiff', '.heic']),
+  Documents: new Set([
+    '.doc',
+    '.docx',
+    '.pdf',
+    '.txt',
+    '.md',
+    '.rtf',
+    '.ppt',
+    '.pptx',
+    '.xls',
+    '.xlsx',
+    '.csv',
+  ]),
+  Images: new Set([
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.webp',
+    '.bmp',
+    '.svg',
+    '.tif',
+    '.tiff',
+    '.heic',
+  ]),
   Videos: new Set(['.mp4', '.mov', '.avi', '.mkv', '.webm', '.wmv', '.m4v']),
   Music: new Set(['.mp3', '.wav', '.flac', '.aac', '.m4a', '.ogg']),
   Archives: new Set(['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz']),
-  Code: new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.py', '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.go', '.rs', '.html', '.css', '.json', '.yml', '.yaml', '.ps1', '.sh']),
+  Code: new Set([
+    '.js',
+    '.jsx',
+    '.ts',
+    '.tsx',
+    '.mjs',
+    '.cjs',
+    '.py',
+    '.java',
+    '.cpp',
+    '.c',
+    '.h',
+    '.hpp',
+    '.cs',
+    '.go',
+    '.rs',
+    '.html',
+    '.css',
+    '.json',
+    '.yml',
+    '.yaml',
+    '.ps1',
+    '.sh',
+  ]),
 };
 
 function safeAppPath(name, fallbackName) {
@@ -208,11 +254,16 @@ function categoryNode(name, aggregate) {
 }
 
 function aggregateExtensionGroups(folderStats) {
-  const groups = Object.fromEntries(Object.keys(EXT_GROUPS).map((name) => [name, {
-    count: 0,
-    sizeBytes: 0,
-    updatedAt: '',
-  }]));
+  const groups = Object.fromEntries(
+    Object.keys(EXT_GROUPS).map((name) => [
+      name,
+      {
+        count: 0,
+        sizeBytes: 0,
+        updatedAt: '',
+      },
+    ]),
+  );
 
   for (const stats of folderStats) {
     for (const [ext, count] of Object.entries(stats.byExt || {})) {
@@ -220,9 +271,15 @@ function aggregateExtensionGroups(folderStats) {
         if (!exts.has(ext)) continue;
         groups[name].count += count;
         if (stats.sizeBytes && stats.count) {
-          groups[name].sizeBytes += Math.round((stats.sizeBytes / Math.max(1, stats.count)) * count);
+          groups[name].sizeBytes += Math.round(
+            (stats.sizeBytes / Math.max(1, stats.count)) * count,
+          );
         }
-        if (stats.updatedAt && (!groups[name].updatedAt || Date.parse(stats.updatedAt) > Date.parse(groups[name].updatedAt))) {
+        if (
+          stats.updatedAt &&
+          (!groups[name].updatedAt ||
+            Date.parse(stats.updatedAt) > Date.parse(groups[name].updatedAt))
+        ) {
           groups[name].updatedAt = stats.updatedAt;
         }
       }
@@ -241,14 +298,18 @@ async function getFileCategoryStats(cleanup) {
     ['music', 'Music', safeAppPath('music', 'Music'), 'files'],
   ];
 
-  const folderStats = await Promise.all(folderDefs.map(([, label, folderPath]) => scanFolder(folderPath, label)));
+  const folderStats = await Promise.all(
+    folderDefs.map(([, label, folderPath]) => scanFolder(folderPath, label)),
+  );
   const byKey = {};
   folderDefs.forEach(([key], index) => {
     byKey[key] = folderStats[index];
   });
 
   const extGroups = aggregateExtensionGroups(folderStats);
-  const folderNodes = folderDefs.map(([key, , , route], index) => fileNodeFromFolder(key, folderStats[index], route));
+  const folderNodes = folderDefs.map(([key, , , route], index) =>
+    fileNodeFromFolder(key, folderStats[index], route),
+  );
   const categoryNodes = Object.entries(extGroups)
     .filter(([, stats]) => stats.count > 0)
     .map(([name, stats]) => categoryNode(name, stats));
@@ -280,24 +341,28 @@ async function getProjectStats(config) {
     const recent = [...projects]
       .sort((a, b) => Date.parse(b.lastModified || 0) - Date.parse(a.lastModified || 0))
       .slice(0, 7);
-    const nodes = recent.map((project) => node({
-      id: `project-${Buffer.from(project.path || project.name || '').toString('base64').slice(0, 18)}`,
-      label: project.name || path.basename(project.path || 'Project'),
-      type: 'project',
-      value: project.totalFileCount || project.detectedFileCount || 1,
-      count: project.totalFileCount || project.detectedFileCount || 0,
-      sizeBytes: project.sizeBytes || undefined,
-      status: project.hasGit || project.isGitRepo ? 'good' : 'normal',
-      path: project.path,
-      updatedAt: project.lastModified,
-      route: 'projects',
-      meta: {
-        category: project.category,
-        tags: project.tags || [],
-        hasGit: !!(project.hasGit || project.isGitRepo),
-        scanTruncated: !!project.scanTruncated,
-      },
-    }));
+    const nodes = recent.map((project) =>
+      node({
+        id: `project-${Buffer.from(project.path || project.name || '')
+          .toString('base64')
+          .slice(0, 18)}`,
+        label: project.name || path.basename(project.path || 'Project'),
+        type: 'project',
+        value: project.totalFileCount || project.detectedFileCount || 1,
+        count: project.totalFileCount || project.detectedFileCount || 0,
+        sizeBytes: project.sizeBytes || undefined,
+        status: project.hasGit || project.isGitRepo ? 'good' : 'normal',
+        path: project.path,
+        updatedAt: project.lastModified,
+        route: 'projects',
+        meta: {
+          category: project.category,
+          tags: project.tags || [],
+          hasGit: !!(project.hasGit || project.isGitRepo),
+          scanTruncated: !!project.scanTruncated,
+        },
+      }),
+    );
 
     return {
       ok: true,
@@ -315,16 +380,20 @@ async function getProjectStats(config) {
       ok: false,
       error: err.message,
       projects: configured,
-      nodes: configured.slice(0, 5).map((project) => node({
-        id: `project-config-${Buffer.from(project.path || project.name || '').toString('base64').slice(0, 18)}`,
-        label: project.name || path.basename(project.path || 'Project'),
-        type: 'project',
-        value: 1,
-        status: 'warning',
-        path: project.path,
-        route: 'projects',
-        meta: { unavailable: true },
-      })),
+      nodes: configured.slice(0, 5).map((project) =>
+        node({
+          id: `project-config-${Buffer.from(project.path || project.name || '')
+            .toString('base64')
+            .slice(0, 18)}`,
+          label: project.name || path.basename(project.path || 'Project'),
+          type: 'project',
+          value: 1,
+          status: 'warning',
+          path: project.path,
+          route: 'projects',
+          meta: { unavailable: true },
+        }),
+      ),
       gitRepoCount: 0,
       activeProjectCount: configured.length,
       pinnedProjects: projectService.normalizeProjectHub(config).pinnedProjects || [],
@@ -411,7 +480,8 @@ function systemNodes(metrics, health, cleanup) {
       label: 'System Health',
       type: 'system',
       value: health?.score ?? 0,
-      status: (health?.score ?? 0) >= 80 ? 'good' : (health?.score ?? 0) >= 60 ? 'warning' : 'danger',
+      status:
+        (health?.score ?? 0) >= 80 ? 'good' : (health?.score ?? 0) >= 60 ? 'warning' : 'danger',
       updatedAt: new Date().toISOString(),
       route: 'health',
     }),
@@ -442,21 +512,29 @@ function todayCount(rows) {
   const y = now.getFullYear();
   const m = now.getMonth();
   const d = now.getDate();
-  return rows.filter((row) => {
-    const date = new Date(row.time || row.at || 0);
-    return date.getFullYear() === y && date.getMonth() === m && date.getDate() === d;
-  }).reduce((sum, row) => sum + Number(row.count || row.moved || 1), 0);
+  return rows
+    .filter((row) => {
+      const date = new Date(row.time || row.at || 0);
+      return date.getFullYear() === y && date.getMonth() === m && date.getDate() === d;
+    })
+    .reduce((sum, row) => sum + Number(row.count || row.moved || 1), 0);
 }
 
 async function getDashboardStats(config) {
-  const cleanup = await cleanupService.getStatus().catch((err) => ({ ok: false, error: err.message }));
+  const cleanup = await cleanupService
+    .getStatus()
+    .catch((err) => ({ ok: false, error: err.message }));
   const [metrics, activities, notifications] = await Promise.all([
     systemMonitorService.getMetrics({
       monitorDrives: config.general && config.general.monitorDrives,
       monitorDrive: config.general && config.general.monitorDrive,
     }),
-    activityHistoryService.listHistory().catch((err) => ({ ok: false, rows: [], error: err.message })),
-    notificationService.listEvents().catch((err) => ({ ok: false, events: [], unreadCount: 0, error: err.message })),
+    activityHistoryService
+      .listHistory()
+      .catch((err) => ({ ok: false, rows: [], error: err.message })),
+    notificationService
+      .listEvents()
+      .catch((err) => ({ ok: false, events: [], unreadCount: 0, error: err.message })),
   ]);
 
   const fileStats = await getFileCategoryStats(cleanup);
@@ -464,7 +542,9 @@ async function getDashboardStats(config) {
   const downloadsCount = Number(fileStats.folders?.downloads?.count || 0);
   const health = systemMonitorService.computeHealthScore(metrics, {
     unsortedDownloads: downloadsCount,
-    hasStaleProject: projectStats.projects.some((project) => Number(project.hoursSinceCommit || 0) > 72),
+    hasStaleProject: projectStats.projects.some(
+      (project) => Number(project.hoursSinceCommit || 0) > 72,
+    ),
   });
   const automation = getAutomationNodes(config);
   const organizedToday = todayCount(activities.rows || []);
@@ -489,8 +569,14 @@ async function getDashboardStats(config) {
   ];
 
   const disk = (metrics.disks || []).find((item) => item.ok) || null;
-  const totalFiles = Object.values(fileStats.folders).reduce((sum, item) => sum + Number(item.count || 0), 0);
-  const totalFileBytes = Object.values(fileStats.folders).reduce((sum, item) => sum + Number(item.sizeBytes || 0), 0);
+  const totalFiles = Object.values(fileStats.folders).reduce(
+    (sum, item) => sum + Number(item.count || 0),
+    0,
+  );
+  const totalFileBytes = Object.values(fileStats.folders).reduce(
+    (sum, item) => sum + Number(item.sizeBytes || 0),
+    0,
+  );
 
   return {
     ok: true,
@@ -526,8 +612,15 @@ async function getDashboardStats(config) {
     },
     nodes,
     unavailable: [
-      { key: 'networkUsage', reason: 'Live network throughput is not exposed by the current backend.' },
-      { key: 'cacheSize', reason: 'Cache size is available after a Clean Center scan, but no standalone cached total is exposed yet.' },
+      {
+        key: 'networkUsage',
+        reason: 'Live network throughput is not exposed by the current backend.',
+      },
+      {
+        key: 'cacheSize',
+        reason:
+          'Cache size is available after a Clean Center scan, but no standalone cached total is exposed yet.',
+      },
     ],
   };
 }

@@ -40,7 +40,11 @@ async function writeOrganizerLog(result) {
   };
 
   await fs.promises.mkdir(path.dirname(target), { recursive: true });
-  await fs.promises.writeFile(target, JSON.stringify([entry, ...logs].slice(0, 50), null, 2), 'utf-8');
+  await fs.promises.writeFile(
+    target,
+    JSON.stringify([entry, ...logs].slice(0, 50), null, 2),
+    'utf-8',
+  );
   return { path: target, entry };
 }
 

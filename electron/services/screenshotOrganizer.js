@@ -56,9 +56,11 @@ function isAlreadyOrganized(rootPath, filePath, dateFolder, category, settings) 
   if (parts.length < 2) return false;
 
   if (settings.organizeByDate && settings.categoryUnderDate) {
-    return parts.length >= 3
-      && parts[0] === dateFolder
-      && parts[1].toLowerCase() === category.toLowerCase();
+    return (
+      parts.length >= 3 &&
+      parts[0] === dateFolder &&
+      parts[1].toLowerCase() === category.toLowerCase()
+    );
   }
 
   if (settings.organizeByDate) {
@@ -77,8 +79,10 @@ function shouldSkipDirectory(rootPath, dirPath, entryName, settings) {
   if (!settings.skipAlreadyOrganized) return false;
 
   const parts = relativeParts(rootPath, dirPath);
-  if (parts.length === 1 && (isDateFolderName(entryName) || isCategoryFolderName(entryName))) return true;
-  if (parts.length >= 2 && isDateFolderName(parts[0]) && isCategoryFolderName(entryName)) return true;
+  if (parts.length === 1 && (isDateFolderName(entryName) || isCategoryFolderName(entryName)))
+    return true;
+  if (parts.length >= 2 && isDateFolderName(parts[0]) && isCategoryFolderName(entryName))
+    return true;
   return false;
 }
 
@@ -106,7 +110,7 @@ async function collectImageFiles(rootPath, settings, errors, current = rootPath)
       if (entry.isDirectory()) {
         if (!settings.includeSubfolders) continue;
         if (shouldSkipDirectory(rootPath, full, entry.name, settings)) continue;
-        files.push(...await collectImageFiles(rootPath, settings, errors, full));
+        files.push(...(await collectImageFiles(rootPath, settings, errors, full)));
         continue;
       }
 
@@ -161,11 +165,20 @@ async function scanScreenshots(basePath, options = {}) {
       const ext = path.extname(fileName).toLowerCase();
       const dateFolder = getScreenshotDate(fileName, stat);
       const category = classifyScreenshot(fileName, keywordMap);
-      const targetBase = buildScreenshotTargetPath(basePath, dateFolder, category, fileName, settings);
+      const targetBase = buildScreenshotTargetPath(
+        basePath,
+        dateFolder,
+        category,
+        fileName,
+        settings,
+      );
       const targetPath = getUniquePath(targetBase, reservedTargets);
       const targetDir = path.dirname(targetPath);
 
-      if (settings.skipAlreadyOrganized && isAlreadyOrganized(basePath, sourcePath, dateFolder, category, settings)) {
+      if (
+        settings.skipAlreadyOrganized &&
+        isAlreadyOrganized(basePath, sourcePath, dateFolder, category, settings)
+      ) {
         result.skippedItems.push({
           name: fileName,
           sourcePath,
@@ -178,7 +191,10 @@ async function scanScreenshots(basePath, options = {}) {
         continue;
       }
 
-      if (path.resolve(path.dirname(sourcePath)).toLowerCase() === path.resolve(targetDir).toLowerCase()) {
+      if (
+        path.resolve(path.dirname(sourcePath)).toLowerCase() ===
+        path.resolve(targetDir).toLowerCase()
+      ) {
         result.skippedItems.push({
           name: fileName,
           sourcePath,
@@ -207,7 +223,8 @@ async function scanScreenshots(basePath, options = {}) {
 
       result.byCategory[category] = (result.byCategory[category] || 0) + 1;
       result.byDateCategory[dateFolder] = result.byDateCategory[dateFolder] || {};
-      result.byDateCategory[dateFolder][category] = (result.byDateCategory[dateFolder][category] || 0) + 1;
+      result.byDateCategory[dateFolder][category] =
+        (result.byDateCategory[dateFolder][category] || 0) + 1;
     } catch (err) {
       result.errors.push({ path: sourcePath, name: path.basename(sourcePath), error: err.message });
     }
@@ -237,7 +254,8 @@ async function organizeScreenshots(plan, options = {}) {
 
   for (const item of items) {
     try {
-      if (!item || !item.sourcePath || !item.targetDir) throw new Error('Invalid screenshot organize item.');
+      if (!item || !item.sourcePath || !item.targetDir)
+        throw new Error('Invalid screenshot organize item.');
       const stat = await fs.promises.stat(item.sourcePath);
       if (!stat.isFile()) throw new Error('Source is not a file.');
 
@@ -265,12 +283,16 @@ async function organizeScreenshots(plan, options = {}) {
       }
 
       await fs.promises.mkdir(item.targetDir, { recursive: true });
-      const targetPath = getUniquePath(path.join(item.targetDir, path.basename(item.sourcePath)), reservedTargets);
+      const targetPath = getUniquePath(
+        path.join(item.targetDir, path.basename(item.sourcePath)),
+        reservedTargets,
+      );
       await moveFile(item.sourcePath, targetPath);
 
       summary.moved += 1;
       summary.byDateCategory[item.dateFolder] = summary.byDateCategory[item.dateFolder] || {};
-      summary.byDateCategory[item.dateFolder][item.category] = (summary.byDateCategory[item.dateFolder][item.category] || 0) + 1;
+      summary.byDateCategory[item.dateFolder][item.category] =
+        (summary.byDateCategory[item.dateFolder][item.category] || 0) + 1;
 
       results.push({
         name: item.name || path.basename(item.sourcePath),
@@ -290,7 +312,11 @@ async function organizeScreenshots(plan, options = {}) {
     } catch (err) {
       const name = item ? item.name || path.basename(item.sourcePath || '') : '(unknown)';
       summary.failed += 1;
-      summary.failedFiles.push({ name, path: item ? item.sourcePath || '' : '', error: err.message });
+      summary.failedFiles.push({
+        name,
+        path: item ? item.sourcePath || '' : '',
+        error: err.message,
+      });
       results.push({
         name,
         from: item ? item.sourcePath || '' : '',

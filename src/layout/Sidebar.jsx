@@ -40,10 +40,13 @@ export const NAV_SECTIONS = [
   },
 ];
 
-export const PAGE_TITLE_KEYS = NAV_SECTIONS.flatMap((section) => section.items).reduce((acc, item) => {
-  acc[item.key] = item.label;
-  return acc;
-}, {});
+export const PAGE_TITLE_KEYS = NAV_SECTIONS.flatMap((section) => section.items).reduce(
+  (acc, item) => {
+    acc[item.key] = item.label;
+    return acc;
+  },
+  {},
+);
 
 function Icon({ name }) {
   const paths = {
@@ -54,7 +57,9 @@ function Icon({ name }) {
     pulse: <path d="M3 12h4l2-6 4 12 2-6h6" />,
     securityCenter: <path d="M12 3l8 4v5c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V7zM9 12l2 2 4-5" />,
     bolt: <path d="M13 2L5 13h6l-2 9 8-12h-6z" />,
-    gear: <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 12h2M18 12h2M12 4v2M12 18v2M6.5 6.5l1.4 1.4M16.1 16.1l1.4 1.4M17.5 6.5l-1.4 1.4M7.9 16.1l-1.4 1.4" />,
+    gear: (
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM4 12h2M18 12h2M12 4v2M12 18v2M6.5 6.5l1.4 1.4M16.1 16.1l1.4 1.4M17.5 6.5l-1.4 1.4M7.9 16.1l-1.4 1.4" />
+    ),
     image: <path d="M4 5h16v14H4zM7 15l3-3 2 2 3-4 3 5M8 8h.01" />,
     template: <path d="M4 4h16v5H4zM4 13h7v7H4zM15 13h5v7h-5z" />,
     play: <path d="M8 5v14l11-7z" />,
@@ -64,13 +69,21 @@ function Icon({ name }) {
     shield: <path d="M12 3l8 4v5c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V7z" />,
     terminal: <path d="M4 6h16v12H4zM7 10l2 2-2 2M11 15h5" />,
     chip: <path d="M8 8h8v8H8zM4 10h4M4 14h4M16 10h4M16 14h4M10 4v4M14 4v4M10 16v4M14 16v4" />,
-    cpu: <path d="M7 7h10v10H7zM10 10h4v4h-4zM3 9h4M3 15h4M17 9h4M17 15h4M9 3v4M15 3v4M9 17v4M15 17v4" />,
+    cpu: (
+      <path d="M7 7h10v10H7zM10 10h4v4h-4zM3 9h4M3 15h4M17 9h4M17 15h4M9 3v4M15 3v4M9 17v4M15 17v4" />
+    ),
     keys: <path d="M7 14a4 4 0 1 1 2.8-6.8L21 18.4V21h-2.6l-2-2H14v-2.4l-2-2A4 4 0 0 1 7 14z" />,
     wand: <path d="M4 20L20 4M14 4h6v6M5 5l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" />,
   };
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {paths[name] || paths.dashboard}
       </g>
     </svg>
@@ -85,9 +98,12 @@ function SystemStatusCard() {
     if (!window.api?.getMonitorState) return undefined;
     let mounted = true;
     const refresh = () => {
-      window.api.getMonitorState().then((result) => {
-        if (mounted && result?.ok) setState(result);
-      }).catch(() => {});
+      window.api
+        .getMonitorState()
+        .then((result) => {
+          if (mounted && result?.ok) setState(result);
+        })
+        .catch(() => {});
     };
     refresh();
     const id = setInterval(refresh, 15000);
@@ -104,7 +120,9 @@ function SystemStatusCard() {
         <strong>{t('shell.systemStatus')}</strong>
       </div>
       <p>{state.paused ? t('shell.monitoringPaused') : t('shell.monitoringActive')}</p>
-      <em>{state.watched || 0} {t('shell.watchedFolders')}</em>
+      <em>
+        {state.watched || 0} {t('shell.watchedFolders')}
+      </em>
     </div>
   );
 }
@@ -134,7 +152,9 @@ export default function Sidebar({ current, onNavigate }) {
                 onClick={() => onNavigate(item.key)}
                 type="button"
               >
-                <span className="icon"><Icon name={item.icon} /></span>
+                <span className="icon">
+                  <Icon name={item.icon} />
+                </span>
                 <span>{t(item.label)}</span>
               </button>
             ))}

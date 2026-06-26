@@ -57,12 +57,7 @@ export default function Screenshots() {
           <Button icon="SC" variant="primary" busy={scanning} onClick={doScan}>
             掃描截圖
           </Button>
-          <Button
-            icon="MV"
-            busy={organizing}
-            disabled={!scan?.items?.length}
-            onClick={doOrganize}
-          >
+          <Button icon="MV" busy={organizing} disabled={!scan?.items?.length} onClick={doOrganize}>
             整理 {scan?.items?.length ? `(${scan.items.length})` : ''}
           </Button>
         </div>

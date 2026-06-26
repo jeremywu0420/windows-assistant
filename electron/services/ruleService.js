@@ -112,7 +112,10 @@ function evaluate(config, context) {
       }
       case 'projectStale': {
         const stale = (ctx.projects || []).filter(
-          (p) => p.hoursSinceCommit !== null && p.hoursSinceCommit !== undefined && p.hoursSinceCommit >= threshold
+          (p) =>
+            p.hoursSinceCommit !== null &&
+            p.hoursSinceCommit !== undefined &&
+            p.hoursSinceCommit >= threshold,
         );
         if (stale.length > 0) {
           alerts.push({

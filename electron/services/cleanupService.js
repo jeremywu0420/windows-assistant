@@ -137,8 +137,14 @@ function normalizeSettings(input = {}) {
     ...defaults,
     ...input,
     safeMode: input.safeMode !== false,
-    defaultScanFolders: uniqueStrings(Array.isArray(input.defaultScanFolders) ? input.defaultScanFolders : defaults.defaultScanFolders),
-    largeFileThresholdMb: LARGE_THRESHOLDS_MB.includes(threshold) ? threshold : defaults.largeFileThresholdMb,
+    defaultScanFolders: uniqueStrings(
+      Array.isArray(input.defaultScanFolders)
+        ? input.defaultScanFolders
+        : defaults.defaultScanFolders,
+    ),
+    largeFileThresholdMb: LARGE_THRESHOLDS_MB.includes(threshold)
+      ? threshold
+      : defaults.largeFileThresholdMb,
     cleanTemp: input.cleanTemp !== false,
     cleanBrowserCache: input.cleanBrowserCache !== false,
     cleanThumbnailCache: input.cleanThumbnailCache !== false,
@@ -147,11 +153,19 @@ function normalizeSettings(input = {}) {
     scanDuplicateFiles: input.scanDuplicateFiles !== false,
     useRecycleBin: input.useRecycleBin !== false,
     showHighRiskFiles: input.showHighRiskFiles !== false,
-    lowDiskThresholdGb: Math.max(1, Number(input.lowDiskThresholdGb || defaults.lowDiskThresholdGb)),
-    lowDiskUsagePercent: Math.max(50, Math.min(99, Number(input.lowDiskUsagePercent || defaults.lowDiskUsagePercent))),
+    lowDiskThresholdGb: Math.max(
+      1,
+      Number(input.lowDiskThresholdGb || defaults.lowDiskThresholdGb),
+    ),
+    lowDiskUsagePercent: Math.max(
+      50,
+      Math.min(99, Number(input.lowDiskUsagePercent || defaults.lowDiskUsagePercent)),
+    ),
     showCleanupReport: input.showCleanupReport !== false,
     writeDetailedLog: input.writeDetailedLog !== false,
-    disabledStartupItems: uniqueStrings(Array.isArray(input.disabledStartupItems) ? input.disabledStartupItems : []),
+    disabledStartupItems: uniqueStrings(
+      Array.isArray(input.disabledStartupItems) ? input.disabledStartupItems : [],
+    ),
   };
 }
 
@@ -161,7 +175,8 @@ async function loadCleanupSettings() {
     const raw = await fs.promises.readFile(target, 'utf-8');
     return { ok: true, path: target, settings: normalizeSettings(JSON.parse(raw)) };
   } catch (err) {
-    if (err.code !== 'ENOENT') return { ok: false, path: target, settings: defaultSettings(), error: err.message };
+    if (err.code !== 'ENOENT')
+      return { ok: false, path: target, settings: defaultSettings(), error: err.message };
     const settings = normalizeSettings();
     await saveCleanupSettings(settings);
     return { ok: true, path: target, settings };
@@ -202,18 +217,21 @@ async function readCleanupLogs() {
 async function writeCleanupLog(entry) {
   const target = cleanupLogsPath();
   const logs = await readCleanupLogs();
-  const next = [{
-    id: entry.id || `cleanup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    time: entry.time || new Date().toISOString(),
-    action: entry.action || 'scan',
-    category: entry.category || '',
-    filePath: entry.filePath || '',
-    fileName: entry.fileName || (entry.filePath ? path.basename(entry.filePath) : ''),
-    fileSize: Number(entry.fileSize || 0),
-    result: entry.result || 'ok',
-    errorMessage: entry.errorMessage || '',
-    details: entry.details || null,
-  }, ...logs].slice(0, LOG_LIMIT);
+  const next = [
+    {
+      id: entry.id || `cleanup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      time: entry.time || new Date().toISOString(),
+      action: entry.action || 'scan',
+      category: entry.category || '',
+      filePath: entry.filePath || '',
+      fileName: entry.fileName || (entry.filePath ? path.basename(entry.filePath) : ''),
+      fileSize: Number(entry.fileSize || 0),
+      result: entry.result || 'ok',
+      errorMessage: entry.errorMessage || '',
+      details: entry.details || null,
+    },
+    ...logs,
+  ].slice(0, LOG_LIMIT);
   await writeJsonArray(target, next);
   return target;
 }
@@ -225,7 +243,9 @@ async function getIgnoreList() {
 }
 
 function normalizeIgnoreItem(input = {}) {
-  const type = ['file', 'folder', 'extension', 'keyword'].includes(input.type) ? input.type : 'file';
+  const type = ['file', 'folder', 'extension', 'keyword'].includes(input.type)
+    ? input.type
+    : 'file';
   let value = String(input.value || '').trim();
   if (type === 'extension' && value && !value.startsWith('.')) value = `.${value}`;
   return {
@@ -243,7 +263,9 @@ async function addIgnoreItem(input) {
   if (!item.value) return { ok: false, error: 'Ignore value is required.' };
   const current = await readJsonArray(target);
   const key = `${item.type}:${item.value.toLowerCase()}`;
-  const exists = current.some((row) => `${row.type}:${String(row.value || '').toLowerCase()}` === key);
+  const exists = current.some(
+    (row) => `${row.type}:${String(row.value || '').toLowerCase()}` === key,
+  );
   const next = exists ? current : [item, ...current];
   await writeJsonArray(target, next);
   return { ok: true, path: target, item, items: next };
@@ -266,11 +288,7 @@ function normalizeResolved(targetPath) {
 }
 
 function protectedRoots() {
-  return uniqueStrings([
-    ...PROTECTED_ROOTS,
-    appInstallPath(),
-    appUserDataPath(),
-  ]);
+  return uniqueStrings([...PROTECTED_ROOTS, appInstallPath(), appUserDataPath()]);
 }
 
 function isProtectedPath(targetPath) {
@@ -336,13 +354,17 @@ function ignoreReasonFor(filePath, ignoreItems = []) {
   for (const raw of ignoreItems || []) {
     const item = normalizeIgnoreItem(raw);
     if (!item.value) continue;
-    if (item.type === 'file' && resolved === normalizeResolved(item.value)) return `ignored file: ${item.value}`;
+    if (item.type === 'file' && resolved === normalizeResolved(item.value))
+      return `ignored file: ${item.value}`;
     if (item.type === 'folder') {
       const folder = normalizeResolved(item.value);
-      if (folder && (resolved === folder || resolved.startsWith(`${folder}${path.sep}`))) return `ignored folder: ${item.value}`;
+      if (folder && (resolved === folder || resolved.startsWith(`${folder}${path.sep}`)))
+        return `ignored folder: ${item.value}`;
     }
-    if (item.type === 'extension' && ext === item.value.toLowerCase()) return `ignored extension: ${item.value}`;
-    if (item.type === 'keyword' && lowerPath.includes(item.value.toLowerCase())) return `ignored keyword: ${item.value}`;
+    if (item.type === 'extension' && ext === item.value.toLowerCase())
+      return `ignored extension: ${item.value}`;
+    if (item.type === 'keyword' && lowerPath.includes(item.value.toLowerCase()))
+      return `ignored keyword: ${item.value}`;
   }
   return '';
 }
@@ -382,24 +404,38 @@ function fileAgeDays(stat) {
 function categoryImpact(category, risk, stat) {
   const age = fileAgeDays(stat);
   if (category === 'Windows Temp' || category === 'User Temp') {
-    if (age < 1) return '最近 24 小時內建立或修改，可能仍被安裝、更新、下載或編譯中的程式使用；預設不清理。';
+    if (age < 1)
+      return '最近 24 小時內建立或修改，可能仍被安裝、更新、下載或編譯中的程式使用；預設不清理。';
     if (age < 7) return '暫存檔未滿 7 天，通常可以稍後再清理；本次不會預設勾選。';
     return '移到資源回收筒後，多數程式會在需要時重新建立暫存檔。';
   }
-  if (category === 'Browser Cache') return '瀏覽器快取會重新下載，可能讓下次開啟網站稍慢，但不會刪除書籤或密碼。';
-  if (category === 'Thumbnail Cache') return 'Windows 會重新產生縮圖，資料夾第一次開啟圖片或影片時可能變慢。';
+  if (category === 'Browser Cache')
+    return '瀏覽器快取會重新下載，可能讓下次開啟網站稍慢，但不會刪除書籤或密碼。';
+  if (category === 'Thumbnail Cache')
+    return 'Windows 會重新產生縮圖，資料夾第一次開啟圖片或影片時可能變慢。';
   if (category === 'Log / Dump') return '刪除後會少掉除錯紀錄；若最近正在追查錯誤，建議保留。';
   if (category === 'Large Files') return '這是使用者檔案或大型素材，清理前請確認內容不再需要。';
-  if (category === 'Duplicate Files') return '看起來內容重複，但仍可能是專案或備份需要的副本；建議人工確認。';
+  if (category === 'Duplicate Files')
+    return '看起來內容重複，但仍可能是專案或備份需要的副本；建議人工確認。';
   if (category === 'Recycle Bin') return '清空資源回收筒後通常無法從原位置還原。';
   if (risk === HIGH) return '此檔案類型可能影響系統、程式設定或資料庫，不建議自動清理。';
   return '將移到資源回收筒，可在清空前還原。';
 }
 
-function itemFromStat({ category, type, filePath, stat, action, risk = SAFE, duplicateGroupId = '', selectedDefault }) {
+function itemFromStat({
+  category,
+  type,
+  filePath,
+  stat,
+  action,
+  risk = SAFE,
+  duplicateGroupId = '',
+  selectedDefault,
+}) {
   const baseRisk = typeof risk === 'function' ? risk(filePath, stat) : risk;
   const finalRisk = riskFor(filePath, baseRisk);
-  const defaultChecked = typeof selectedDefault === 'boolean' ? selectedDefault : finalRisk === SAFE;
+  const defaultChecked =
+    typeof selectedDefault === 'boolean' ? selectedDefault : finalRisk === SAFE;
   return {
     id: fileId(`${category}:${filePath}`),
     category,
@@ -419,36 +455,52 @@ function itemFromStat({ category, type, filePath, stat, action, risk = SAFE, dup
   };
 }
 
-async function scanDirectoryFiles(rootPath, {
-  recursive = true,
-  matcher = () => true,
-  category = '',
-  type = '',
-  action = 'Move to Recycle Bin',
-  risk = SAFE,
-  maxFiles = MAX_SCAN_FILES,
-  ignoreItems = [],
-  includeHiddenSystem = false,
-  selectedDefault,
-  defaultSelector,
-  allowProtectedRoot = false,
-} = {}) {
+async function scanDirectoryFiles(
+  rootPath,
+  {
+    recursive = true,
+    matcher = () => true,
+    category = '',
+    type = '',
+    action = 'Move to Recycle Bin',
+    risk = SAFE,
+    maxFiles = MAX_SCAN_FILES,
+    ignoreItems = [],
+    includeHiddenSystem = false,
+    selectedDefault,
+    defaultSelector,
+    allowProtectedRoot = false,
+  } = {},
+) {
   const items = [];
   const errors = [];
   let skipped = 0;
   const rootResolved = normalizeResolved(rootPath);
   const allowedProtectedChild = (targetPath) => {
     const resolved = normalizeResolved(targetPath);
-    return allowProtectedRoot && rootResolved && (resolved === rootResolved || resolved.startsWith(`${rootResolved}${path.sep}`));
+    return (
+      allowProtectedRoot &&
+      rootResolved &&
+      (resolved === rootResolved || resolved.startsWith(`${rootResolved}${path.sep}`))
+    );
   };
-  if (!rootPath || (!allowedProtectedChild(rootPath) && isProtectedPath(rootPath)) || isSystemCoreUserFolder(rootPath) || !await pathExists(rootPath)) {
+  if (
+    !rootPath ||
+    (!allowedProtectedChild(rootPath) && isProtectedPath(rootPath)) ||
+    isSystemCoreUserFolder(rootPath) ||
+    !(await pathExists(rootPath))
+  ) {
     return { items, errors, skipped };
   }
 
   const queue = [rootPath];
   while (queue.length && items.length < maxFiles) {
     const current = queue.shift();
-    if ((!allowedProtectedChild(current) && isProtectedPath(current)) || isSystemCoreUserFolder(current) || ignoreReasonFor(current, ignoreItems)) {
+    if (
+      (!allowedProtectedChild(current) && isProtectedPath(current)) ||
+      isSystemCoreUserFolder(current) ||
+      ignoreReasonFor(current, ignoreItems)
+    ) {
       skipped += 1;
       continue;
     }
@@ -482,8 +534,19 @@ async function scanDirectoryFiles(rootPath, {
         if (!entry.isFile()) continue;
         const stat = await fs.promises.stat(full);
         if (!matcher(full, stat)) continue;
-        const shouldSelect = typeof defaultSelector === 'function' ? !!defaultSelector(full, stat) : selectedDefault;
-        items.push(itemFromStat({ category, type, filePath: full, stat, action, risk, selectedDefault: shouldSelect }));
+        const shouldSelect =
+          typeof defaultSelector === 'function' ? !!defaultSelector(full, stat) : selectedDefault;
+        items.push(
+          itemFromStat({
+            category,
+            type,
+            filePath: full,
+            stat,
+            action,
+            risk,
+            selectedDefault: shouldSelect,
+          }),
+        );
         if (items.length >= maxFiles) break;
       } catch (err) {
         errors.push({ path: full, error: err.message });
@@ -503,12 +566,17 @@ function tempPaths() {
 }
 
 function tempPathEntries() {
-  const systemRoot = process.env.SystemRoot ? path.join(process.env.SystemRoot, 'Temp') : 'C:\\Windows\\Temp';
+  const systemRoot = process.env.SystemRoot
+    ? path.join(process.env.SystemRoot, 'Temp')
+    : 'C:\\Windows\\Temp';
   const entries = [
     { category: 'Windows Temp', dir: systemRoot, allowProtectedRoot: true },
     { category: 'User Temp', dir: process.env.TEMP || '' },
     { category: 'User Temp', dir: process.env.TMP || '' },
-    { category: 'User Temp', dir: process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Temp') : '' },
+    {
+      category: 'User Temp',
+      dir: process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Temp') : '',
+    },
   ];
   const seen = new Set();
   return entries.filter((entry) => {
@@ -523,44 +591,70 @@ function tempPathEntries() {
 function browserCachePaths() {
   const local = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   return [
-    { label: 'Chrome Cache', dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'Cache') },
-    { label: 'Chrome Code Cache', dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'Code Cache') },
-    { label: 'Chrome GPUCache', dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'GPUCache') },
-    { label: 'Edge Cache', dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Cache') },
-    { label: 'Edge Code Cache', dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Code Cache') },
-    { label: 'Edge GPUCache', dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'GPUCache') },
+    {
+      label: 'Chrome Cache',
+      dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'Cache'),
+    },
+    {
+      label: 'Chrome Code Cache',
+      dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'Code Cache'),
+    },
+    {
+      label: 'Chrome GPUCache',
+      dir: path.join(local, 'Google', 'Chrome', 'User Data', 'Default', 'GPUCache'),
+    },
+    {
+      label: 'Edge Cache',
+      dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Cache'),
+    },
+    {
+      label: 'Edge Code Cache',
+      dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Code Cache'),
+    },
+    {
+      label: 'Edge GPUCache',
+      dir: path.join(local, 'Microsoft', 'Edge', 'User Data', 'Default', 'GPUCache'),
+    },
   ];
 }
 
 async function scanTempFiles(options = {}) {
-  const batches = await Promise.all(tempPathEntries().map((entry) => scanDirectoryFiles(entry.dir, {
-    recursive: true,
-    category: entry.category,
-    type: 'Temporary file',
-    action: 'Move to Recycle Bin',
-    risk: (_filePath, stat) => fileAgeDays(stat) >= 7 ? SAFE : REVIEW,
-    ignoreItems: options.ignoreItems || [],
-    allowProtectedRoot: !!entry.allowProtectedRoot,
-    selectedDefault: false,
-    defaultSelector: (filePath, stat) => (
-      fileAgeDays(stat) >= 7
-      && !isUserContentFolderPath(filePath)
-      && !isInstallerUpdateDriverTemp(filePath)
+  const batches = await Promise.all(
+    tempPathEntries().map((entry) =>
+      scanDirectoryFiles(entry.dir, {
+        recursive: true,
+        category: entry.category,
+        type: 'Temporary file',
+        action: 'Move to Recycle Bin',
+        risk: (_filePath, stat) => (fileAgeDays(stat) >= 7 ? SAFE : REVIEW),
+        ignoreItems: options.ignoreItems || [],
+        allowProtectedRoot: !!entry.allowProtectedRoot,
+        selectedDefault: false,
+        defaultSelector: (filePath, stat) =>
+          fileAgeDays(stat) >= 7 &&
+          !isUserContentFolderPath(filePath) &&
+          !isInstallerUpdateDriverTemp(filePath),
+        matcher: (filePath) =>
+          !isUserContentFolderPath(filePath) && !isInstallerUpdateDriverTemp(filePath),
+      }),
     ),
-    matcher: (filePath) => !isUserContentFolderPath(filePath) && !isInstallerUpdateDriverTemp(filePath),
-  })));
+  );
   return mergeBatches(batches);
 }
 
 async function scanBrowserCache(options = {}) {
-  const batches = await Promise.all(browserCachePaths().map((entry) => scanDirectoryFiles(entry.dir, {
-    recursive: true,
-    category: 'Browser Cache',
-    type: entry.label,
-    action: 'Move to Recycle Bin',
-    risk: SAFE,
-    ignoreItems: options.ignoreItems || [],
-  })));
+  const batches = await Promise.all(
+    browserCachePaths().map((entry) =>
+      scanDirectoryFiles(entry.dir, {
+        recursive: true,
+        category: 'Browser Cache',
+        type: entry.label,
+        action: 'Move to Recycle Bin',
+        risk: SAFE,
+        ignoreItems: options.ignoreItems || [],
+      }),
+    ),
+  );
   return mergeBatches(batches);
 }
 
@@ -580,31 +674,39 @@ async function scanThumbnailCache(options = {}) {
 
 async function scanLogFiles(settings, options = {}) {
   const roots = uniqueStrings([...tempPaths(), ...(settings.defaultScanFolders || [])]);
-  const batches = await Promise.all(roots.map((dir) => scanDirectoryFiles(dir, {
-    recursive: true,
-    category: 'Log / Dump',
-    type: 'Log / Dump / Backup',
-    action: 'Move to Recycle Bin',
-    risk: REVIEW,
-    ignoreItems: options.ignoreItems || [],
-    selectedDefault: false,
-    matcher: (filePath) => LOG_DUMP_EXTS.has(path.extname(filePath).toLowerCase()),
-  })));
+  const batches = await Promise.all(
+    roots.map((dir) =>
+      scanDirectoryFiles(dir, {
+        recursive: true,
+        category: 'Log / Dump',
+        type: 'Log / Dump / Backup',
+        action: 'Move to Recycle Bin',
+        risk: REVIEW,
+        ignoreItems: options.ignoreItems || [],
+        selectedDefault: false,
+        matcher: (filePath) => LOG_DUMP_EXTS.has(path.extname(filePath).toLowerCase()),
+      }),
+    ),
+  );
   return mergeBatches(batches);
 }
 
 async function scanLargeFiles(settings, options = {}) {
   const threshold = Number(settings.largeFileThresholdMb || 100) * 1024 * 1024;
-  const batches = await Promise.all((settings.defaultScanFolders || []).map((dir) => scanDirectoryFiles(dir, {
-    recursive: true,
-    category: 'Large Files',
-    type: `Over ${settings.largeFileThresholdMb || 100}MB`,
-    action: 'Review manually',
-    risk: HIGH,
-    ignoreItems: options.ignoreItems || [],
-    selectedDefault: false,
-    matcher: (_filePath, stat) => stat.size >= threshold,
-  })));
+  const batches = await Promise.all(
+    (settings.defaultScanFolders || []).map((dir) =>
+      scanDirectoryFiles(dir, {
+        recursive: true,
+        category: 'Large Files',
+        type: `Over ${settings.largeFileThresholdMb || 100}MB`,
+        action: 'Review manually',
+        risk: HIGH,
+        ignoreItems: options.ignoreItems || [],
+        selectedDefault: false,
+        matcher: (_filePath, stat) => stat.size >= threshold,
+      }),
+    ),
+  );
   return mergeBatches(batches);
 }
 
@@ -637,17 +739,21 @@ function hashFile(filePath) {
 }
 
 async function collectFilesForDuplicates(settings, options = {}) {
-  const batches = await Promise.all((settings.defaultScanFolders || []).map((dir) => scanDirectoryFiles(dir, {
-    recursive: true,
-    category: 'Duplicate Files',
-    type: 'Duplicate candidate',
-    action: 'Review manually',
-    risk: REVIEW,
-    maxFiles: MAX_DUPLICATE_CANDIDATES,
-    ignoreItems: options.ignoreItems || [],
-    selectedDefault: false,
-    matcher: (_filePath, stat) => stat.size > 0,
-  })));
+  const batches = await Promise.all(
+    (settings.defaultScanFolders || []).map((dir) =>
+      scanDirectoryFiles(dir, {
+        recursive: true,
+        category: 'Duplicate Files',
+        type: 'Duplicate candidate',
+        action: 'Review manually',
+        risk: REVIEW,
+        maxFiles: MAX_DUPLICATE_CANDIDATES,
+        ignoreItems: options.ignoreItems || [],
+        selectedDefault: false,
+        matcher: (_filePath, stat) => stat.size > 0,
+      }),
+    ),
+  );
   return mergeBatches(batches);
 }
 
@@ -683,7 +789,12 @@ async function scanDuplicateFiles(settings, options = {}) {
   for (const group of hashGroups.values()) {
     if (group.length < 2) continue;
     const duplicateGroupId = `dup-${groupIndex}`;
-    groups.push({ id: duplicateGroupId, size: group[0].size, count: group.length, files: group.map((item) => item.path) });
+    groups.push({
+      id: duplicateGroupId,
+      size: group[0].size,
+      count: group.length,
+      files: group.map((item) => item.path),
+    });
     group.forEach((item) => {
       items.push({ ...item, duplicateGroupId, selectedDefault: false });
     });
@@ -721,7 +832,7 @@ function execPowerShell(script) {
       (err, stdout, stderr) => {
         if (err) return resolve({ ok: false, error: stderr || err.message, stdout: stdout || '' });
         return resolve({ ok: true, stdout: stdout || '' });
-      }
+      },
     );
   });
 }
@@ -760,14 +871,30 @@ async function emptyRecycleBin() {
     result: res.ok ? 'success' : 'error',
     errorMessage: res.error || '',
   });
-  return { ok: res.ok, clearedSize: before.size || 0, count: before.count || 0, error: res.error || '' };
+  return {
+    ok: res.ok,
+    clearedSize: before.size || 0,
+    count: before.count || 0,
+    error: res.error || '',
+  };
 }
 
 async function scanStartupItems(settings) {
   const startupDir = process.env.APPDATA
     ? path.join(process.env.APPDATA, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
-    : path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup');
-  const disabled = new Set((settings.disabledStartupItems || []).map((item) => normalizeResolved(item)));
+    : path.join(
+        os.homedir(),
+        'AppData',
+        'Roaming',
+        'Microsoft',
+        'Windows',
+        'Start Menu',
+        'Programs',
+        'Startup',
+      );
+  const disabled = new Set(
+    (settings.disabledStartupItems || []).map((item) => normalizeResolved(item)),
+  );
   try {
     const entries = await fs.promises.readdir(startupDir, { withFileTypes: true });
     const items = [];
@@ -797,7 +924,13 @@ async function scanStartupItems(settings) {
 function summarizeCategories(items, settings, recycleBin, startup) {
   const rows = {};
   for (const item of items) {
-    const current = rows[item.category] || { count: 0, size: 0, highRisk: 0, risk: SAFE, status: 'Scanned' };
+    const current = rows[item.category] || {
+      count: 0,
+      size: 0,
+      highRisk: 0,
+      risk: SAFE,
+      status: 'Scanned',
+    };
     current.count += 1;
     current.size += item.size || 0;
     if (item.risk === HIGH || item.risk === PERMANENT) current.highRisk += 1;
@@ -818,7 +951,13 @@ function summarizeCategories(items, settings, recycleBin, startup) {
   };
 
   for (const key of Object.keys(enabled)) {
-    const row = rows[key] || { count: 0, size: 0, highRisk: 0, risk: SAFE, status: enabled[key] ? 'Scanned' : 'Disabled' };
+    const row = rows[key] || {
+      count: 0,
+      size: 0,
+      highRisk: 0,
+      risk: SAFE,
+      status: enabled[key] ? 'Scanned' : 'Disabled',
+    };
     row.enabled = !!enabled[key];
     rows[key] = row;
   }
@@ -842,7 +981,8 @@ function summarizeCategories(items, settings, recycleBin, startup) {
 }
 
 async function getDiskUsage(targetPath) {
-  const drivePath = targetPath || (process.env.SystemDrive ? `${process.env.SystemDrive}\\` : 'C:\\');
+  const drivePath =
+    targetPath || (process.env.SystemDrive ? `${process.env.SystemDrive}\\` : 'C:\\');
   try {
     const stats = await fs.promises.statfs(drivePath);
     const blockSize = stats.bsize;
@@ -853,7 +993,16 @@ async function getDiskUsage(targetPath) {
     const usedPercent = total > 0 ? Math.round((used / total) * 100) : 0;
     return { ok: true, drive: drivePath, total, free, used, freePercent, usedPercent };
   } catch (err) {
-    return { ok: false, drive: drivePath, total: 0, free: 0, used: 0, freePercent: 0, usedPercent: 0, error: err.message };
+    return {
+      ok: false,
+      drive: drivePath,
+      total: 0,
+      free: 0,
+      used: 0,
+      freePercent: 0,
+      usedPercent: 0,
+      error: err.message,
+    };
   }
 }
 
@@ -861,7 +1010,19 @@ function impact(level) {
   return level;
 }
 
-function buildRecommendations({ downloadsCount, downloadsSize, desktopCount, tempSize, browserSize, largeCount, duplicateCount, recycleBin, startupCount, disk, settings }) {
+function buildRecommendations({
+  downloadsCount,
+  downloadsSize,
+  desktopCount,
+  tempSize,
+  browserSize,
+  largeCount,
+  duplicateCount,
+  recycleBin,
+  startupCount,
+  disk,
+  settings,
+}) {
   const rows = [];
   if (tempSize > 1024 * 1024 * 1024) {
     rows.push({
@@ -941,7 +1102,11 @@ function buildRecommendations({ downloadsCount, downloadsSize, desktopCount, tem
     });
   }
   const lowBytes = Number(settings.lowDiskThresholdGb || 20) * 1024 * 1024 * 1024;
-  if (disk && disk.ok && (disk.free < lowBytes || disk.usedPercent >= Number(settings.lowDiskUsagePercent || 90))) {
+  if (
+    disk &&
+    disk.ok &&
+    (disk.free < lowBytes || disk.usedPercent >= Number(settings.lowDiskUsagePercent || 90))
+  ) {
     rows.push({
       id: 'disk-low',
       title: 'C 槽空間不足',
@@ -966,9 +1131,20 @@ function buildRecommendations({ downloadsCount, downloadsSize, desktopCount, tem
   return rows;
 }
 
-async function buildOptimization(items, duplicateGroups, settings, recycleBin, startup, ignoreItems) {
-  const tempSize = items.filter((item) => item.category === 'Windows Temp' || item.category === 'User Temp').reduce((sum, item) => sum + item.size, 0);
-  const browserSize = items.filter((item) => item.category === 'Browser Cache').reduce((sum, item) => sum + item.size, 0);
+async function buildOptimization(
+  items,
+  duplicateGroups,
+  settings,
+  recycleBin,
+  startup,
+  ignoreItems,
+) {
+  const tempSize = items
+    .filter((item) => item.category === 'Windows Temp' || item.category === 'User Temp')
+    .reduce((sum, item) => sum + item.size, 0);
+  const browserSize = items
+    .filter((item) => item.category === 'Browser Cache')
+    .reduce((sum, item) => sum + item.size, 0);
   const downloads = safeAppPath('downloads', 'Downloads');
   const desktop = safeAppPath('desktop', 'Desktop');
   const downloadsSize = await calculateFolderSize(downloads, { ignoreItems });
@@ -1037,7 +1213,14 @@ async function scan(options = {}) {
   const recycleBin = await getRecycleBinInfo();
   const startup = await scanStartupItems(settings);
   const logs = await readCleanupLogs();
-  const optimization = await buildOptimization(items, duplicates.groups || [], settings, recycleBin, startup, ignoreItems);
+  const optimization = await buildOptimization(
+    items,
+    duplicates.groups || [],
+    settings,
+    recycleBin,
+    startup,
+    ignoreItems,
+  );
   const categories = summarizeCategories(items, settings, recycleBin, startup);
   const finishedAt = new Date();
 
@@ -1071,9 +1254,12 @@ async function scan(options = {}) {
       totalSize: items.reduce((sum, item) => sum + item.size, 0),
       highRiskCount: items.filter((item) => item.risk === HIGH || item.risk === PERMANENT).length,
       safeCount: items.filter((item) => item.risk === SAFE).length,
-      selectedDefaultSize: items.filter((item) => item.selectedDefault).reduce((sum, item) => sum + item.size, 0),
+      selectedDefaultSize: items
+        .filter((item) => item.selectedDefault)
+        .reduce((sum, item) => sum + item.size, 0),
       lastScanTime: finishedAt.toISOString(),
-      lastCleanupTime: (logs.find((log) => log.action === 'clean' && log.result === 'success') || {}).time || '',
+      lastCleanupTime:
+        (logs.find((log) => log.action === 'clean' && log.result === 'success') || {}).time || '',
     },
     optimization,
   };
@@ -1094,8 +1280,10 @@ function cleanupFailureReason(err) {
 function shouldTreatAsSkipped(err) {
   const code = String((err && err.code) || '').toUpperCase();
   const message = String((err && err.message) || '');
-  return ['ENOENT', 'EBUSY', 'EPERM', 'EACCES'].includes(code)
-    || /protected path|only files|recycle bin/i.test(message);
+  return (
+    ['ENOENT', 'EBUSY', 'EPERM', 'EACCES'].includes(code) ||
+    /protected path|only files|recycle bin/i.test(message)
+  );
 }
 
 async function cleanSelectedFiles(items = [], options = {}) {
@@ -1125,7 +1313,13 @@ async function cleanSelectedFiles(items = [], options = {}) {
       await moveToRecycleBin(filePath);
       cleaned += 1;
       freedSize += stat.size;
-      results.push({ path: filePath, fileName: path.basename(filePath), size: stat.size, category: item.category || '', status: 'cleaned' });
+      results.push({
+        path: filePath,
+        fileName: path.basename(filePath),
+        size: stat.size,
+        category: item.category || '',
+        status: 'cleaned',
+      });
       await writeCleanupLog({
         action: 'clean',
         category: item.category || '',
@@ -1214,11 +1408,20 @@ async function getStatus() {
   const loaded = await loadCleanupSettings();
   const settings = loaded.settings || defaultSettings();
   const logs = await readCleanupLogs();
-  const lastScan = logs.find((log) => log.action === 'scan' && (log.result === 'success' || log.result === 'ok'));
-  const lastClean = logs.find((log) => log.action === 'clean-summary' || (log.action === 'clean' && log.result === 'success'));
+  const lastScan = logs.find(
+    (log) => log.action === 'scan' && (log.result === 'success' || log.result === 'ok'),
+  );
+  const lastClean = logs.find(
+    (log) => log.action === 'clean-summary' || (log.action === 'clean' && log.result === 'success'),
+  );
   const ignore = await getIgnoreList();
-  const tempSize = (await Promise.all(tempPaths().map((dir) => calculateFolderSize(dir, { ignoreItems: ignore.items || [] }).catch(() => 0))))
-    .reduce((sum, size) => sum + size, 0);
+  const tempSize = (
+    await Promise.all(
+      tempPaths().map((dir) =>
+        calculateFolderSize(dir, { ignoreItems: ignore.items || [] }).catch(() => 0),
+      ),
+    )
+  ).reduce((sum, size) => sum + size, 0);
   const disk = await getDiskUsage('C:\\');
   const recycleBin = await getRecycleBinInfo();
   const recommendations = buildRecommendations({
@@ -1238,7 +1441,9 @@ async function getStatus() {
     ok: true,
     lastScanTime: lastScan ? lastScan.time : '',
     lastCleanupTime: lastClean ? lastClean.time : '',
-    lastFreedSize: lastClean ? Number(lastClean.fileSize || (lastClean.details && lastClean.details.freedSize) || 0) : 0,
+    lastFreedSize: lastClean
+      ? Number(lastClean.fileSize || (lastClean.details && lastClean.details.freedSize) || 0)
+      : 0,
     tempSize,
     recycleBin,
     disk,
@@ -1252,16 +1457,18 @@ async function exportLogs(format = 'json') {
   const ext = format === 'txt' ? 'txt' : 'json';
   const target = path.join(appUserDataPath(), `cleanupLogs-export-${Date.now()}.${ext}`);
   if (ext === 'txt') {
-    const lines = logs.map((log) => [
-      log.time,
-      log.action,
-      log.category,
-      log.fileName || path.basename(log.filePath || ''),
-      log.filePath,
-      log.fileSize,
-      log.result,
-      log.errorMessage || '',
-    ].join('\t'));
+    const lines = logs.map((log) =>
+      [
+        log.time,
+        log.action,
+        log.category,
+        log.fileName || path.basename(log.filePath || ''),
+        log.filePath,
+        log.fileSize,
+        log.result,
+        log.errorMessage || '',
+      ].join('\t'),
+    );
     await fs.promises.writeFile(target, lines.join(os.EOL), 'utf-8');
   } else {
     await fs.promises.writeFile(target, JSON.stringify(logs, null, 2), 'utf-8');
@@ -1286,15 +1493,31 @@ async function runAutomationAction(type, options = {}) {
     case 'scanLargeFiles':
       return { ok: true, ...(await scanLargeFiles(settings, { ignoreItems: ignore.items || [] })) };
     case 'scanDuplicateFiles':
-      return { ok: true, ...(await scanDuplicateFiles(settings, { ignoreItems: ignore.items || [] })) };
+      return {
+        ok: true,
+        ...(await scanDuplicateFiles(settings, { ignoreItems: ignore.items || [] })),
+      };
     case 'checkTempSize': {
-      const size = (await Promise.all(tempPaths().map((dir) => calculateFolderSize(dir, { ignoreItems: ignore.items || [] }).catch(() => 0))))
-        .reduce((sum, value) => sum + value, 0);
-      return { ok: true, size, exceeded: size >= Number(options.thresholdBytes || 1024 * 1024 * 1024) };
+      const size = (
+        await Promise.all(
+          tempPaths().map((dir) =>
+            calculateFolderSize(dir, { ignoreItems: ignore.items || [] }).catch(() => 0),
+          ),
+        )
+      ).reduce((sum, value) => sum + value, 0);
+      return {
+        ok: true,
+        size,
+        exceeded: size >= Number(options.thresholdBytes || 1024 * 1024 * 1024),
+      };
     }
     case 'checkRecycleBinSize': {
       const bin = await getRecycleBinInfo();
-      return { ok: bin.ok, ...bin, exceeded: (bin.size || 0) >= Number(options.thresholdBytes || 2 * 1024 * 1024 * 1024) };
+      return {
+        ok: bin.ok,
+        ...bin,
+        exceeded: (bin.size || 0) >= Number(options.thresholdBytes || 2 * 1024 * 1024 * 1024),
+      };
     }
     case 'checkDownloadsCount': {
       const count = await countFilesShallow(safeAppPath('downloads', 'Downloads'));

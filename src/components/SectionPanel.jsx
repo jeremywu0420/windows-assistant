@@ -1,9 +1,16 @@
 import React from 'react';
 
-export default function SectionPanel({ title, eyebrow, description, actions, children, className = '' }) {
+export default function SectionPanel({
+  title,
+  eyebrow,
+  description,
+  actions,
+  children,
+  className = '',
+}) {
   return (
     <section className={`section-panel ${className}`.trim()}>
-      {(title || description || actions) ? (
+      {title || description || actions ? (
         <div className="section-panel-head">
           <div>
             {eyebrow ? <div className="panel-label">{eyebrow}</div> : null}

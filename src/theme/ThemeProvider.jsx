@@ -72,9 +72,27 @@ export function ThemeProvider({ children }) {
     }
   }, []);
 
-  const setTheme = useCallback((t) => { setThemeState(t); persist({ theme: t }); }, [persist]);
-  const setAccent = useCallback((a) => { setAccentState(a); persist({ accentColor: a }); }, [persist]);
-  const setCompact = useCallback((c) => { setCompactState(c); persist({ compactMode: c }); }, [persist]);
+  const setTheme = useCallback(
+    (t) => {
+      setThemeState(t);
+      persist({ theme: t });
+    },
+    [persist],
+  );
+  const setAccent = useCallback(
+    (a) => {
+      setAccentState(a);
+      persist({ accentColor: a });
+    },
+    [persist],
+  );
+  const setCompact = useCallback(
+    (c) => {
+      setCompactState(c);
+      persist({ compactMode: c });
+    },
+    [persist],
+  );
 
   const cycleTheme = useCallback(() => {
     const idx = THEMES.indexOf(theme);
@@ -83,7 +101,17 @@ export function ThemeProvider({ children }) {
 
   return (
     <ThemeContext.Provider
-      value={{ theme, accent, compact, loaded, setTheme, setAccent, setCompact, cycleTheme, THEMES }}
+      value={{
+        theme,
+        accent,
+        compact,
+        loaded,
+        setTheme,
+        setAccent,
+        setCompact,
+        cycleTheme,
+        THEMES,
+      }}
     >
       {children}
     </ThemeContext.Provider>

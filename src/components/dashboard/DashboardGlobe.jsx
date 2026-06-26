@@ -22,20 +22,102 @@ const TYPE_COLORS = {
 };
 
 const FALLBACK_NODES = [
-  { id: 'fallback-system', label: 'System', type: 'system', value: 72, status: 'normal', route: 'monitor', meta: { unavailable: true } },
-  { id: 'fallback-storage', label: 'Storage', type: 'system', value: 64, status: 'normal', route: 'monitor', meta: { unavailable: true } },
-  { id: 'fallback-downloads', label: 'Downloads', type: 'file', value: 38, status: 'good', route: 'files', meta: { unavailable: true } },
-  { id: 'fallback-desktop', label: 'Desktop', type: 'file', value: 44, status: 'good', route: 'files', meta: { unavailable: true } },
-  { id: 'fallback-documents', label: 'Documents', type: 'file', value: 32, status: 'good', route: 'files', meta: { unavailable: true } },
-  { id: 'fallback-cache', label: 'Cache', type: 'cleanup', value: 58, status: 'warning', route: 'cleanup', meta: { unavailable: true } },
-  { id: 'fallback-temp', label: 'Temp Files', type: 'cleanup', value: 42, status: 'warning', route: 'cleanup', meta: { unavailable: true } },
-  { id: 'fallback-projects', label: 'Project Hub', type: 'project', value: 70, status: 'normal', route: 'projects', meta: { unavailable: true } },
-  { id: 'fallback-network', label: 'Network', type: 'system', value: 50, status: 'normal', route: 'monitor', meta: { unavailable: true } },
-  { id: 'fallback-security', label: 'Security', type: 'system', value: 80, status: 'good', route: 'health', meta: { unavailable: true } },
+  {
+    id: 'fallback-system',
+    label: 'System',
+    type: 'system',
+    value: 72,
+    status: 'normal',
+    route: 'monitor',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-storage',
+    label: 'Storage',
+    type: 'system',
+    value: 64,
+    status: 'normal',
+    route: 'monitor',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-downloads',
+    label: 'Downloads',
+    type: 'file',
+    value: 38,
+    status: 'good',
+    route: 'files',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-desktop',
+    label: 'Desktop',
+    type: 'file',
+    value: 44,
+    status: 'good',
+    route: 'files',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-documents',
+    label: 'Documents',
+    type: 'file',
+    value: 32,
+    status: 'good',
+    route: 'files',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-cache',
+    label: 'Cache',
+    type: 'cleanup',
+    value: 58,
+    status: 'warning',
+    route: 'cleanup',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-temp',
+    label: 'Temp Files',
+    type: 'cleanup',
+    value: 42,
+    status: 'warning',
+    route: 'cleanup',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-projects',
+    label: 'Project Hub',
+    type: 'project',
+    value: 70,
+    status: 'normal',
+    route: 'projects',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-network',
+    label: 'Network',
+    type: 'system',
+    value: 50,
+    status: 'normal',
+    route: 'monitor',
+    meta: { unavailable: true },
+  },
+  {
+    id: 'fallback-security',
+    label: 'Security',
+    type: 'system',
+    value: 80,
+    status: 'good',
+    route: 'health',
+    meta: { unavailable: true },
+  },
 ];
 
 function hash(input) {
-  return String(input || '').split('').reduce((sum, char) => ((sum << 5) - sum + char.charCodeAt(0)) | 0, 0);
+  return String(input || '')
+    .split('')
+    .reduce((sum, char) => ((sum << 5) - sum + char.charCodeAt(0)) | 0, 0);
 }
 
 function getNodeValue(node) {
@@ -82,7 +164,7 @@ function makeCityPoints(count = 1100, radius = 2.365) {
     const band = Math.abs(Math.sin(vec.x * 1.8 + vec.y * 3.2 + vec.z * 0.7));
     if (band < 0.25 && index % 3 !== 0) continue;
     positions.push(vec.x, vec.y, vec.z);
-    const color = index % 13 === 0 ? violet : (index % 5 === 0 ? blue : cyan);
+    const color = index % 13 === 0 ? violet : index % 5 === 0 ? blue : cyan;
     const strength = 0.45 + (Math.abs(noise) % 0.55);
     colors.push(color.r * strength, color.g * strength, color.b * strength);
   }
@@ -128,7 +210,8 @@ function describeAmount(node, t) {
   if (!node) return t('dashboard.unavailable');
   if (node.meta?.unavailable) return t('dashboard.unavailable');
   const parts = [];
-  if (node.count != null) parts.push(`${new Intl.NumberFormat().format(node.count)} ${t('dashboard.files')}`);
+  if (node.count != null)
+    parts.push(`${new Intl.NumberFormat().format(node.count)} ${t('dashboard.files')}`);
   if (node.sizeBytes != null) parts.push(formatBytes(node.sizeBytes));
   if (!parts.length && node.value != null) parts.push(new Intl.NumberFormat().format(node.value));
   return parts.join(' / ') || t('dashboard.unavailable');
@@ -170,7 +253,11 @@ export default function DashboardGlobe({
   const displayNodes = useMemo(() => {
     const source = nodes.length ? nodes : FALLBACK_NODES;
     return [...source]
-      .sort((a, b) => (STATUS_ORDER[b.status] || 0) - (STATUS_ORDER[a.status] || 0) || getNodeValue(b) - getNodeValue(a))
+      .sort(
+        (a, b) =>
+          (STATUS_ORDER[b.status] || 0) - (STATUS_ORDER[a.status] || 0) ||
+          getNodeValue(b) - getNodeValue(a),
+      )
       .slice(0, 34);
   }, [nodes]);
 
@@ -300,7 +387,11 @@ export default function DashboardGlobe({
     const selectedHaloSprites = [];
     const positionedNodes = displayNodes.map((node, index) => ({
       node,
-      position: sphericalPosition(index, displayNodes.length, Math.abs(hash(node.id || node.label))),
+      position: sphericalPosition(
+        index,
+        displayNodes.length,
+        Math.abs(hash(node.id || node.label)),
+      ),
     }));
 
     positionedNodes.forEach(({ node, position }) => {
@@ -319,7 +410,8 @@ export default function DashboardGlobe({
       );
       mesh.userData.dashboardNode = node;
       mesh.userData.baseRadius = radius;
-      mesh.userData.alert = node.status === 'danger' || node.status === 'warning' || value > maxValue * 0.74;
+      mesh.userData.alert =
+        node.status === 'danger' || node.status === 'warning' || value > maxValue * 0.74;
       mesh.userData.defaultColor = color;
       group.add(mesh);
 
@@ -427,7 +519,8 @@ export default function DashboardGlobe({
     };
 
     const clearHover = () => {
-      if (hoveredMesh && hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current) hoveredMesh.scale.setScalar(1);
+      if (hoveredMesh && hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current)
+        hoveredMesh.scale.setScalar(1);
       hoveredMesh = null;
       setHovered(null);
     };
@@ -446,11 +539,16 @@ export default function DashboardGlobe({
         return;
       }
 
-      if (hoveredMesh && hoveredMesh !== hit.object && hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current) {
+      if (
+        hoveredMesh &&
+        hoveredMesh !== hit.object &&
+        hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current
+      ) {
         hoveredMesh.scale.setScalar(1);
       }
       hoveredMesh = hit.object;
-      if (hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current) hoveredMesh.scale.setScalar(1.55);
+      if (hoveredMesh.userData.dashboardNode?.id !== selectedNodeIdRef.current)
+        hoveredMesh.scale.setScalar(1.55);
 
       const stageRect = stage.getBoundingClientRect();
       setHovered({
@@ -603,7 +701,8 @@ export default function DashboardGlobe({
       scene.traverse((object) => {
         if (object.geometry) object.geometry.dispose();
         if (object.material) {
-          if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
+          if (Array.isArray(object.material))
+            object.material.forEach((material) => material.dispose());
           else object.material.dispose();
         }
       });
@@ -619,9 +718,18 @@ export default function DashboardGlobe({
   const canUsePortal = typeof document !== 'undefined' && selected;
   const panelWidth = viewport.width < 760 ? Math.max(300, viewport.width - 32) : 380;
   const panelLeft = viewport.width < 760 ? 16 : viewport.width - panelWidth - 32;
-  const panelTop = viewport.width < 760
-    ? clamp((selectedAnchor?.y || viewport.height * 0.5) + 42, 72, Math.max(72, viewport.height - 360))
-    : clamp((selectedAnchor?.y || viewport.height * 0.45) - 160, 86, Math.max(86, viewport.height - 390));
+  const panelTop =
+    viewport.width < 760
+      ? clamp(
+          (selectedAnchor?.y || viewport.height * 0.5) + 42,
+          72,
+          Math.max(72, viewport.height - 360),
+        )
+      : clamp(
+          (selectedAnchor?.y || viewport.height * 0.45) - 160,
+          86,
+          Math.max(86, viewport.height - 390),
+        );
   const connectorEnd = {
     x: panelLeft,
     y: panelTop + 142,
@@ -663,53 +771,88 @@ export default function DashboardGlobe({
           {tooltipLine(t('dashboard.status'), statusLabel(t, tooltipNode.status))}
           {tooltipLine(t('dashboard.type'), tooltipNode.type)}
           {tooltipLine(t('dashboard.size'), describeAmount(tooltipNode, t))}
-          {tooltipLine(t('dashboard.updated'), tooltipNode.updatedAt ? new Date(tooltipNode.updatedAt).toLocaleString() : t('dashboard.unavailable'))}
+          {tooltipLine(
+            t('dashboard.updated'),
+            tooltipNode.updatedAt
+              ? new Date(tooltipNode.updatedAt).toLocaleString()
+              : t('dashboard.unavailable'),
+          )}
         </div>
       ) : null}
 
-      {canUsePortal ? createPortal(
-        <>
-          {selectedAnchor ? (
-            <svg className="globe-detail-connector" width={viewport.width} height={viewport.height} aria-hidden="true">
-              <path d={connectorPath} />
-              <circle className="connector-origin" cx={selectedAnchor.x} cy={selectedAnchor.y} r="7" />
-              <circle className="connector-origin connector-origin-pulse" cx={selectedAnchor.x} cy={selectedAnchor.y} r="14" />
-            </svg>
-          ) : null}
-          <aside
-            className="globe-detail-panel"
-            style={{
-              width: panelWidth,
-              left: panelLeft,
-              top: panelTop,
-            }}
-          >
-            <header>
-              <span>{selected.type}</span>
-              <button type="button" onClick={onNodeClear} aria-label="Close selected node">x</button>
-            </header>
-            <strong>{selected.label}</strong>
-            <dl>
-              <div>
-                <dt>{t('dashboard.status')}</dt>
-                <dd className={`status-text-${selected.status}`}>{statusLabel(t, selected.status)}</dd>
-              </div>
-              <div>
-                <dt>{t('dashboard.size')}</dt>
-                <dd>{describeAmount(selected, t)}</dd>
-              </div>
-              <div>
-                <dt>{t('dashboard.updated')}</dt>
-                <dd>{selected.updatedAt ? new Date(selected.updatedAt).toLocaleString() : t('dashboard.unavailable')}</dd>
-              </div>
-            </dl>
-            <button type="button" className="globe-open-button" onClick={() => onNodeOpen?.(selected)} disabled={!selected.route}>
-              {t('dashboard.open')}
-            </button>
-          </aside>
-        </>,
-        document.body,
-      ) : null}
+      {canUsePortal
+        ? createPortal(
+            <>
+              {selectedAnchor ? (
+                <svg
+                  className="globe-detail-connector"
+                  width={viewport.width}
+                  height={viewport.height}
+                  aria-hidden="true"
+                >
+                  <path d={connectorPath} />
+                  <circle
+                    className="connector-origin"
+                    cx={selectedAnchor.x}
+                    cy={selectedAnchor.y}
+                    r="7"
+                  />
+                  <circle
+                    className="connector-origin connector-origin-pulse"
+                    cx={selectedAnchor.x}
+                    cy={selectedAnchor.y}
+                    r="14"
+                  />
+                </svg>
+              ) : null}
+              <aside
+                className="globe-detail-panel"
+                style={{
+                  width: panelWidth,
+                  left: panelLeft,
+                  top: panelTop,
+                }}
+              >
+                <header>
+                  <span>{selected.type}</span>
+                  <button type="button" onClick={onNodeClear} aria-label="Close selected node">
+                    x
+                  </button>
+                </header>
+                <strong>{selected.label}</strong>
+                <dl>
+                  <div>
+                    <dt>{t('dashboard.status')}</dt>
+                    <dd className={`status-text-${selected.status}`}>
+                      {statusLabel(t, selected.status)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t('dashboard.size')}</dt>
+                    <dd>{describeAmount(selected, t)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('dashboard.updated')}</dt>
+                    <dd>
+                      {selected.updatedAt
+                        ? new Date(selected.updatedAt).toLocaleString()
+                        : t('dashboard.unavailable')}
+                    </dd>
+                  </div>
+                </dl>
+                <button
+                  type="button"
+                  className="globe-open-button"
+                  onClick={() => onNodeOpen?.(selected)}
+                  disabled={!selected.route}
+                >
+                  {t('dashboard.open')}
+                </button>
+              </aside>
+            </>,
+            document.body,
+          )
+        : null}
     </section>
   );
 }

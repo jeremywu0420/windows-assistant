@@ -21,7 +21,7 @@ export function ToastProvider({ children }) {
       setItems((prev) => [...prev, { id, message, type }]);
       setTimeout(() => remove(id), ms);
     },
-    [remove]
+    [remove],
   );
 
   return (

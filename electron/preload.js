@@ -18,7 +18,8 @@ const cleanupApi = {
   removeIgnoreItem: (id) => ipcRenderer.invoke('cleanup:removeIgnoreItem', id),
   getDiskUsage: (drivePath) => ipcRenderer.invoke('cleanup:getDiskUsage', drivePath),
   getRecommendations: (payload) => ipcRenderer.invoke('cleanup:getRecommendations', payload),
-  runAutomationAction: (type, options) => ipcRenderer.invoke('cleanup:automationAction', type, options),
+  runAutomationAction: (type, options) =>
+    ipcRenderer.invoke('cleanup:automationAction', type, options),
   getRecycleBin: () => ipcRenderer.invoke('cleanup:recycleBin'),
   emptyRecycleBin: () => ipcRenderer.invoke('cleanup:emptyRecycleBin'),
   getStartupItems: () => ipcRenderer.invoke('cleanup:startupItems'),
@@ -150,7 +151,8 @@ contextBridge.exposeInMainWorld('api', {
 
   // Screenshot Organizer
   getScreenshotSettings: () => ipcRenderer.invoke('screenshots:getSettings'),
-  updateScreenshotSettings: (settings) => ipcRenderer.invoke('screenshots:updateSettings', settings),
+  updateScreenshotSettings: (settings) =>
+    ipcRenderer.invoke('screenshots:updateSettings', settings),
   scanScreenshots: (payload) => ipcRenderer.invoke('screenshots:scan', payload),
   organizeScreenshots: (payload) => ipcRenderer.invoke('screenshots:organize', payload),
 

@@ -3,12 +3,20 @@
 const { execFile } = require('child_process');
 
 const POWERSHELL = 'powershell.exe';
-const POWERSHELL_BASE_ARGS = ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command'];
-const UTF8_PREAMBLE = '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); $OutputEncoding = [System.Text.UTF8Encoding]::new($false);';
+const POWERSHELL_BASE_ARGS = [
+  '-NoProfile',
+  '-NonInteractive',
+  '-ExecutionPolicy',
+  'Bypass',
+  '-Command',
+];
+const UTF8_PREAMBLE =
+  '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); $OutputEncoding = [System.Text.UTF8Encoding]::new($false);';
 
 const COMMANDS = Object.freeze({
   defenderStatus: 'Get-MpComputerStatus | ConvertTo-Json -Depth 4 -Compress',
-  firewallStatus: 'Get-NetFirewallProfile | Select-Object Name,Enabled,DefaultInboundAction,DefaultOutboundAction | ConvertTo-Json -Depth 4 -Compress',
+  firewallStatus:
+    'Get-NetFirewallProfile | Select-Object Name,Enabled,DefaultInboundAction,DefaultOutboundAction | ConvertTo-Json -Depth 4 -Compress',
   accountProtection: String.raw`
 $uac = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name EnableLUA -ErrorAction SilentlyContinue
 $passport = Get-Service -Name NgcSvc -ErrorAction SilentlyContinue
@@ -121,7 +129,8 @@ function unsupportedOs() {
 }
 
 function classifyPowerShellError(err, stdout = '', stderr = '', options = {}) {
-  const combined = `${err && err.message ? err.message : ''}\n${stdout || ''}\n${stderr || ''}`.toLowerCase();
+  const combined =
+    `${err && err.message ? err.message : ''}\n${stdout || ''}\n${stderr || ''}`.toLowerCase();
 
   if (err && (err.code === 'ENOENT' || err.path === POWERSHELL)) {
     return {
@@ -131,12 +140,12 @@ function classifyPowerShellError(err, stdout = '', stderr = '', options = {}) {
   }
 
   if (
-    combined.includes('access is denied')
-    || combined.includes('unauthorized')
-    || combined.includes('permission')
-    || combined.includes('privilege')
-    || combined.includes('administrator')
-    || combined.includes('not have sufficient')
+    combined.includes('access is denied') ||
+    combined.includes('unauthorized') ||
+    combined.includes('permission') ||
+    combined.includes('privilege') ||
+    combined.includes('administrator') ||
+    combined.includes('not have sufficient')
   ) {
     return {
       code: 'PERMISSION_DENIED',
@@ -152,12 +161,12 @@ function classifyPowerShellError(err, stdout = '', stderr = '', options = {}) {
   }
 
   if (
-    combined.includes('not recognized')
-    || combined.includes('not installed')
-    || combined.includes('get-mpcomputerstatus')
-    || combined.includes('start-mpscan')
-    || combined.includes('update-mpsignature')
-    || combined.includes('defender')
+    combined.includes('not recognized') ||
+    combined.includes('not installed') ||
+    combined.includes('get-mpcomputerstatus') ||
+    combined.includes('start-mpscan') ||
+    combined.includes('update-mpsignature') ||
+    combined.includes('defender')
   ) {
     return {
       code: 'DEFENDER_COMMAND_UNAVAILABLE',
@@ -185,27 +194,32 @@ function runPowerShell(command, options = {}) {
       return;
     }
 
-    execFile(POWERSHELL, [...POWERSHELL_BASE_ARGS, `${UTF8_PREAMBLE} ${command}`], {
-      timeout: options.timeout || 20000,
-      windowsHide: true,
-      maxBuffer: options.maxBuffer || 1024 * 1024,
-    }, (err, stdout, stderr) => {
-      if (err) {
-        const mapped = classifyPowerShellError(err, stdout, stderr, options);
-        resolve({
-          ok: false,
-          ...mapped,
-          detail: String(stderr || stdout || err.message || '').trim(),
-        });
-        return;
-      }
+    execFile(
+      POWERSHELL,
+      [...POWERSHELL_BASE_ARGS, `${UTF8_PREAMBLE} ${command}`],
+      {
+        timeout: options.timeout || 20000,
+        windowsHide: true,
+        maxBuffer: options.maxBuffer || 1024 * 1024,
+      },
+      (err, stdout, stderr) => {
+        if (err) {
+          const mapped = classifyPowerShellError(err, stdout, stderr, options);
+          resolve({
+            ok: false,
+            ...mapped,
+            detail: String(stderr || stdout || err.message || '').trim(),
+          });
+          return;
+        }
 
-      resolve({
-        ok: true,
-        stdout: String(stdout || '').trim(),
-        stderr: String(stderr || '').trim(),
-      });
-    });
+        resolve({
+          ok: true,
+          stdout: String(stdout || '').trim(),
+          stderr: String(stderr || '').trim(),
+        });
+      },
+    );
   });
 }
 
@@ -367,11 +381,13 @@ async function getSecurityStatus() {
       devicePerformanceHealth,
       familyOptions,
       protectionHistory,
-    ].filter((item) => item && !item.ok).map((item) => ({
-      code: item.code,
-      error: item.error,
-      detail: item.detail,
-    })),
+    ]
+      .filter((item) => item && !item.ok)
+      .map((item) => ({
+        code: item.code,
+        error: item.error,
+        detail: item.detail,
+      })),
   };
 }
 

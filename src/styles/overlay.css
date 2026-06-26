@@ -41,7 +41,7 @@
   border-radius: 4px;
   color: #f8fbff;
   background: rgba(2, 6, 14, 0.12);
-  font-family: "Cascadia Mono", "Cascadia Code", "Consolas", "Microsoft JhengHei", monospace;
+  font-family: 'Cascadia Mono', 'Cascadia Code', 'Consolas', 'Microsoft JhengHei', monospace;
   font-size: var(--overlay-font-size, 14px);
   font-weight: 800;
   line-height: 1.25;
@@ -60,7 +60,7 @@
 }
 
 .overlay-group:not(:last-child)::after {
-  content: "|";
+  content: '|';
   margin-left: 2px;
   color: rgba(240, 248, 255, 0.86);
 }

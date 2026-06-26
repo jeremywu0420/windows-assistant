@@ -49,7 +49,12 @@ function baseName(value) {
 function isVSCodePath(value) {
   if (!value) return false;
   const base = baseName(value).toLowerCase();
-  return base === 'code.exe' || base === 'code.cmd' || base === 'code' || /microsoft vs code/i.test(value);
+  return (
+    base === 'code.exe' ||
+    base === 'code.cmd' ||
+    base === 'code' ||
+    /microsoft vs code/i.test(value)
+  );
 }
 
 function deriveAppName(value) {
@@ -60,7 +65,8 @@ function deriveAppName(value) {
 }
 
 function normalizeApp(entry) {
-  if (typeof entry === 'string') return { path: entry, name: deriveAppName(entry), icon: '', workspaceFolder: '' };
+  if (typeof entry === 'string')
+    return { path: entry, name: deriveAppName(entry), icon: '', workspaceFolder: '' };
   if (entry && typeof entry === 'object') {
     const appPath = entry.path || '';
     return {
@@ -102,7 +108,10 @@ async function detectVSCode(preferred) {
   const candidates = [];
   if (preferred && preferred.trim()) candidates.push(preferred.trim());
   candidates.push(path.join(os.homedir(), VSCODE_REL));
-  if (process.env.LOCALAPPDATA) candidates.push(path.join(process.env.LOCALAPPDATA, 'Programs', 'Microsoft VS Code', 'Code.exe'));
+  if (process.env.LOCALAPPDATA)
+    candidates.push(
+      path.join(process.env.LOCALAPPDATA, 'Programs', 'Microsoft VS Code', 'Code.exe'),
+    );
   if (process.env.USERPROFILE) candidates.push(path.join(process.env.USERPROFILE, VSCODE_REL));
   candidates.push('C:\\Program Files\\Microsoft VS Code\\Code.exe');
   candidates.push('C:\\Program Files (x86)\\Microsoft VS Code\\Code.exe');
@@ -208,16 +217,21 @@ async function openVSCode(appObj, configuredVscode, steps) {
 
   steps.push({
     type: 'app',
-    target: appObj.workspaceFolder ? (label + ' (' + appObj.workspaceFolder + ')') : label,
+    target: appObj.workspaceFolder ? label + ' (' + appObj.workspaceFolder + ')' : label,
     status: launch.ok ? 'ok' : 'error',
-    message: launch.ok ? ('Opened ' + detected.path) : launch.error || 'Launch failed',
+    message: launch.ok ? 'Opened ' + detected.path : launch.error || 'Launch failed',
   });
 }
 
 async function openApp(appObj, steps) {
   const label = appLabel(appObj);
   if (!appObj.path || !fs.existsSync(appObj.path)) {
-    steps.push({ type: 'app', target: label, status: 'error', message: `找不到應用程式：${appObj.path || '(空白)'}` });
+    steps.push({
+      type: 'app',
+      target: label,
+      status: 'error',
+      message: `找不到應用程式：${appObj.path || '(空白)'}`,
+    });
     return;
   }
 
@@ -324,7 +338,13 @@ async function runCommand(cmd, steps, options = {}) {
     return;
   }
   if (cmd.cwd && !fs.existsSync(cmd.cwd)) {
-    steps.push({ type: 'command', target: commandText, cwd, status: 'error', message: `找不到工作目錄：${cwd}` });
+    steps.push({
+      type: 'command',
+      target: commandText,
+      cwd,
+      status: 'error',
+      message: `找不到工作目錄：${cwd}`,
+    });
     return;
   }
 
@@ -335,7 +355,11 @@ async function runCommand(cmd, steps, options = {}) {
       let decision = 'skip';
       if (typeof options.onDevServerRunning === 'function') {
         try {
-          decision = await options.onDevServerRunning({ port, isOwn: probe.isOwn, command: commandText });
+          decision = await options.onDevServerRunning({
+            port,
+            isOwn: probe.isOwn,
+            command: commandText,
+          });
         } catch (_) {
           decision = 'skip';
         }
@@ -367,7 +391,13 @@ async function runCommand(cmd, steps, options = {}) {
       });
 
       child.on('error', (err) => {
-        steps.push({ type: 'command', target: commandText, cwd, status: 'error', message: err.message });
+        steps.push({
+          type: 'command',
+          target: commandText,
+          cwd,
+          status: 'error',
+          message: err.message,
+        });
         resolve();
       });
 
@@ -386,14 +416,32 @@ async function runCommand(cmd, steps, options = {}) {
       child.on('exit', (code) => {
         clearTimeout(timer);
         if (code === 0) {
-          steps.push({ type: 'command', target: commandText, cwd, status: 'ok', message: '已完成' });
+          steps.push({
+            type: 'command',
+            target: commandText,
+            cwd,
+            status: 'ok',
+            message: '已完成',
+          });
         } else {
-          steps.push({ type: 'command', target: commandText, cwd, status: 'error', message: `結束碼 ${code}` });
+          steps.push({
+            type: 'command',
+            target: commandText,
+            cwd,
+            status: 'error',
+            message: `結束碼 ${code}`,
+          });
         }
         resolve();
       });
     } catch (err) {
-      steps.push({ type: 'command', target: commandText, cwd, status: 'error', message: err.message });
+      steps.push({
+        type: 'command',
+        target: commandText,
+        cwd,
+        status: 'error',
+        message: err.message,
+      });
       resolve();
     }
   });

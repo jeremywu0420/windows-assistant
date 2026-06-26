@@ -31,36 +31,46 @@ let inFlight = null;
 function execPowerShellJson(script, timeout = 3000) {
   return new Promise((resolve) => {
     if (process.platform !== 'win32') return resolve(null);
-    execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], {
-      timeout,
-      windowsHide: true,
-      maxBuffer: 1024 * 1024,
-    }, (err, stdout) => {
-      if (err || !stdout) return resolve(null);
-      try {
-        resolve(JSON.parse(stdout));
-      } catch (_) {
-        resolve(null);
-      }
-    });
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      {
+        timeout,
+        windowsHide: true,
+        maxBuffer: 1024 * 1024,
+      },
+      (err, stdout) => {
+        if (err || !stdout) return resolve(null);
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (_) {
+          resolve(null);
+        }
+      },
+    );
   });
 }
 
 function execFileCapture(file, args, options = {}) {
   return new Promise((resolve) => {
-    execFile(file, args, {
-      timeout: options.timeout || 4500,
-      windowsHide: true,
-      maxBuffer: 1024 * 1024 * 4,
-    }, (err, stdout, stderr) => {
-      resolve({
-        ok: !err,
-        code: err && typeof err.code !== 'undefined' ? err.code : 0,
-        error: err ? err.message : '',
-        stdout: stdout || '',
-        stderr: stderr || '',
-      });
-    });
+    execFile(
+      file,
+      args,
+      {
+        timeout: options.timeout || 4500,
+        windowsHide: true,
+        maxBuffer: 1024 * 1024 * 4,
+      },
+      (err, stdout, stderr) => {
+        resolve({
+          ok: !err,
+          code: err && typeof err.code !== 'undefined' ? err.code : 0,
+          error: err ? err.message : '',
+          stdout: stdout || '',
+          stderr: stderr || '',
+        });
+      },
+    );
   });
 }
 
@@ -75,11 +85,45 @@ function existingFile(filePath) {
 function findPresentMonCandidates() {
   const candidates = [];
   if (process.env.PRESENTMON_PATH) candidates.push(process.env.PRESENTMON_PATH);
-  candidates.push(path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'WinGet', 'Packages', 'Intel.PresentMon.Console_Microsoft.Winget.Source_8wekyb3d8bbwe', 'presentmon.exe'));
-  candidates.push(path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Intel', 'PresentMon', 'presentmon.exe'));
-  candidates.push(path.join(process.env.ProgramFiles || 'C:\\Program Files', 'PresentMon', 'presentmon.exe'));
-  candidates.push(path.join(process.env.ProgramFiles || 'C:\\Program Files', 'NVIDIA Corporation', 'FrameViewSDK', 'bin', 'PresentMon_x64.exe'));
-  candidates.push(path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'NVIDIA Corporation', 'FrameViewSDK', 'bin', 'PresentMon_x64.exe'));
+  candidates.push(
+    path.join(
+      process.env.LOCALAPPDATA || '',
+      'Microsoft',
+      'WinGet',
+      'Packages',
+      'Intel.PresentMon.Console_Microsoft.Winget.Source_8wekyb3d8bbwe',
+      'presentmon.exe',
+    ),
+  );
+  candidates.push(
+    path.join(
+      process.env.ProgramFiles || 'C:\\Program Files',
+      'Intel',
+      'PresentMon',
+      'presentmon.exe',
+    ),
+  );
+  candidates.push(
+    path.join(process.env.ProgramFiles || 'C:\\Program Files', 'PresentMon', 'presentmon.exe'),
+  );
+  candidates.push(
+    path.join(
+      process.env.ProgramFiles || 'C:\\Program Files',
+      'NVIDIA Corporation',
+      'FrameViewSDK',
+      'bin',
+      'PresentMon_x64.exe',
+    ),
+  );
+  candidates.push(
+    path.join(
+      process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)',
+      'NVIDIA Corporation',
+      'FrameViewSDK',
+      'bin',
+      'PresentMon_x64.exe',
+    ),
+  );
   return Array.from(new Set(candidates)).map(existingFile).filter(Boolean);
 }
 
@@ -89,10 +133,12 @@ async function findPresentMon() {
 
   const where = await execFileCapture('where.exe', ['presentmon'], { timeout: 2000 });
   if (!where.ok || !where.stdout) return null;
-  return where.stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find((line) => existingFile(line)) || null;
+  return (
+    where.stdout
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find((line) => existingFile(line)) || null
+  );
 }
 
 async function getForegroundProcess() {
@@ -125,13 +171,18 @@ if ($p) {
 
 function presentMonArgs(exePath, outputFile, foreground) {
   const modern = path.basename(exePath).toLowerCase() === 'presentmon.exe';
-  const shouldTarget = foreground && foreground.pid && !IGNORE_APPS.has(String(foreground.exeName || '').toLowerCase());
+  const shouldTarget =
+    foreground &&
+    foreground.pid &&
+    !IGNORE_APPS.has(String(foreground.exeName || '').toLowerCase());
 
   if (modern) {
     const args = [
-      '--timed', String(SAMPLE_SECONDS),
+      '--timed',
+      String(SAMPLE_SECONDS),
       '--terminate_after_timed',
-      '--output_file', outputFile,
+      '--output_file',
+      outputFile,
       '--no_console_stats',
       '--stop_existing_session',
       '--exclude_dropped',
@@ -142,9 +193,11 @@ function presentMonArgs(exePath, outputFile, foreground) {
   }
 
   const args = [
-    '-timed', String(SAMPLE_SECONDS),
+    '-timed',
+    String(SAMPLE_SECONDS),
     '-terminate_after_timed',
-    '-output_file', outputFile,
+    '-output_file',
+    outputFile,
     '-no_top',
     '-stop_existing_session',
     '-exclude_dropped',
@@ -179,7 +232,10 @@ function parseCsvLine(line) {
 }
 
 function parseCsv(text) {
-  const lines = String(text || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lines = String(text || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   if (lines.length < 2) return [];
   const headers = parseCsvLine(lines[0]).map((header) => header.trim());
   return lines.slice(1).map((line) => {
@@ -221,7 +277,9 @@ function chooseRows(rows, foreground) {
 
   if (foreground && foreground.exeName) {
     const name = String(foreground.exeName).toLowerCase();
-    const nameRows = validRows.filter((row) => String(row.Application || '').toLowerCase() === name);
+    const nameRows = validRows.filter(
+      (row) => String(row.Application || '').toLowerCase() === name,
+    );
     if (nameRows.length >= 2) return nameRows;
   }
 
@@ -267,11 +325,17 @@ function summarizeRows(rows) {
 async function captureWithPresentMon(exePath, foreground) {
   const outputFile = path.join(os.tmpdir(), `nexus-presentmon-${process.pid}-${Date.now()}.csv`);
   try {
-    const result = await execFileCapture(exePath, presentMonArgs(exePath, outputFile, foreground), { timeout: 5500 });
+    const result = await execFileCapture(exePath, presentMonArgs(exePath, outputFile, foreground), {
+      timeout: 5500,
+    });
     if (!result.ok && !fs.existsSync(outputFile)) {
       return {
         ok: false,
-        error: result.stderr || result.stdout || result.error || `PresentMon exited with code ${result.code}`,
+        error:
+          result.stderr ||
+          result.stdout ||
+          result.error ||
+          `PresentMon exited with code ${result.code}`,
       };
     }
 
@@ -282,7 +346,9 @@ async function captureWithPresentMon(exePath, foreground) {
     if (!summary) {
       return {
         ok: false,
-        error: rows.length ? 'PresentMon did not capture enough displayed frames for the foreground app.' : 'PresentMon produced no frame rows.',
+        error: rows.length
+          ? 'PresentMon did not capture enough displayed frames for the foreground app.'
+          : 'PresentMon produced no frame rows.',
       };
     }
 
@@ -331,22 +397,22 @@ async function getFpsMetrics(options = {}) {
     const captured = await captureWithPresentMon(exePath, foreground);
     const value = captured.ok
       ? {
-        fps: captured.fps,
-        low1: captured.low1,
-        available: true,
-        source: captured.source,
-        target: captured.target,
-        sampleCount: captured.sampleCount,
-        foreground: captured.foreground,
-      }
+          fps: captured.fps,
+          low1: captured.low1,
+          available: true,
+          source: captured.source,
+          target: captured.target,
+          sampleCount: captured.sampleCount,
+          foreground: captured.foreground,
+        }
       : {
-        fps: null,
-        low1: null,
-        available: false,
-        source: path.basename(exePath),
-        message: captured.error || 'PresentMon capture failed.',
-        foreground,
-      };
+          fps: null,
+          low1: null,
+          available: false,
+          source: path.basename(exePath),
+          message: captured.error || 'PresentMon capture failed.',
+          foreground,
+        };
 
     cached = { at: Date.now(), value };
     return value;

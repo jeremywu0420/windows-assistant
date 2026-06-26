@@ -22,7 +22,8 @@ function packageVersion() {
 
 function appVersion() {
   try {
-    if (electronApp && typeof electronApp.getVersion === 'function') return electronApp.getVersion();
+    if (electronApp && typeof electronApp.getVersion === 'function')
+      return electronApp.getVersion();
   } catch (_) {
     // fall through
   }
@@ -78,7 +79,10 @@ function setup(options = {}) {
 
   const autoUpdater = getAutoUpdater();
   if (!autoUpdater) {
-    emit('error', { state: 'error', error: 'Auto updater is unavailable outside Electron runtime.' });
+    emit('error', {
+      state: 'error',
+      error: 'Auto updater is unavailable outside Electron runtime.',
+    });
     return;
   }
 
@@ -138,9 +142,10 @@ function setup(options = {}) {
 
     const win = getWindow();
     const parent = win && !win.isDestroyed() ? win : undefined;
-    const showMessageBox = electronDialog && typeof electronDialog.showMessageBox === 'function'
-      ? electronDialog.showMessageBox.bind(electronDialog)
-      : async () => ({ response: 1 });
+    const showMessageBox =
+      electronDialog && typeof electronDialog.showMessageBox === 'function'
+        ? electronDialog.showMessageBox.bind(electronDialog)
+        : async () => ({ response: 1 });
     const { response } = await showMessageBox(parent, {
       type: 'info',
       buttons: ['Restart now', 'Later'],
@@ -149,7 +154,8 @@ function setup(options = {}) {
       noLink: true,
       title: 'Update ready',
       message: `PC Life Assistant ${info.version || ''} is ready to install.`,
-      detail: 'Restart now to finish the update. If you choose Later, it will install when you quit the app.',
+      detail:
+        'Restart now to finish the update. If you choose Later, it will install when you quit the app.',
     });
     if (response === 0) install();
   });
@@ -192,7 +198,11 @@ function install() {
 }
 
 function getStatus() {
-  return { ok: true, status: { ...status, version: status.version || appVersion() }, packaged: isPackaged() };
+  return {
+    ok: true,
+    status: { ...status, version: status.version || appVersion() },
+    packaged: isPackaged(),
+  };
 }
 
 module.exports = {

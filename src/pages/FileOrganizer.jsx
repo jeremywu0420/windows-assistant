@@ -23,7 +23,9 @@ export default function FileOrganizer() {
     (async () => {
       if (!window.api) return;
       const result = await window.api.getSettings();
-      setAskBefore(!(result.settings.general && result.settings.general.askBeforeOrganizing === false));
+      setAskBefore(
+        !(result.settings.general && result.settings.general.askBeforeOrganizing === false),
+      );
     })();
   }, []);
 
@@ -97,7 +99,10 @@ export default function FileOrganizer() {
     setMoveResult(result);
     setCanUndo(result.moved > 0);
     setOrganizing(false);
-    toast(`整理完成：成功 ${result.moved}，失敗 ${result.failed}`, result.failed === 0 ? 'ok' : 'warn');
+    toast(
+      `整理完成：成功 ${result.moved}，失敗 ${result.failed}`,
+      result.failed === 0 ? 'ok' : 'warn',
+    );
 
     const fresh = await window.api.scanDownloads();
     if (fresh.ok) setScan(fresh);

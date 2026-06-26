@@ -56,13 +56,17 @@ export default function NotificationCenter({ onNavigate }) {
         eyebrow="SYSTEM"
         title="通知中心"
         description="集中顯示健康守護、自動化、Clean Center、更新與系統事件。"
-        actions={(
+        actions={
           <>
             <StatusBadge tone={unread ? 'warn' : 'ok'}>{unread} 個未讀</StatusBadge>
-            <Button variant="ghost" onClick={markAllRead}>全部已讀</Button>
-            <Button variant="danger" onClick={clearAll}>清空</Button>
+            <Button variant="ghost" onClick={markAllRead}>
+              全部已讀
+            </Button>
+            <Button variant="danger" onClick={clearAll}>
+              清空
+            </Button>
           </>
-        )}
+        }
       />
 
       <SectionPanel title="事件清單" description="有下一步動作的事件可以直接前往相關頁面處理。">
@@ -72,16 +76,27 @@ export default function NotificationCenter({ onNavigate }) {
           emptyDescription="健康守護與自動化觸發後會出現在這裡。"
           columns={[
             { key: 'time', label: '時間', render: (row) => formatTime(row.time) },
-            { key: 'level', label: '等級', render: (row) => <StatusBadge tone={tone(row.level)}>{row.level || 'info'}</StatusBadge> },
+            {
+              key: 'level',
+              label: '等級',
+              render: (row) => (
+                <StatusBadge tone={tone(row.level)}>{row.level || 'info'}</StatusBadge>
+              ),
+            },
             { key: 'title', label: '標題', render: (row) => <strong>{row.title}</strong> },
             { key: 'body', label: '內容' },
             { key: 'source', label: '來源' },
             {
               key: 'action',
               label: '動作',
-              render: (row) => row.action
-                ? <Button size="sm" onClick={() => onNavigate(row.action)}>前往</Button>
-                : '--',
+              render: (row) =>
+                row.action ? (
+                  <Button size="sm" onClick={() => onNavigate(row.action)}>
+                    前往
+                  </Button>
+                ) : (
+                  '--'
+                ),
             },
           ]}
         />

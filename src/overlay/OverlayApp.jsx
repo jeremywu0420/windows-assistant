@@ -25,7 +25,7 @@ function valueOrNa(value, suffix = '') {
 
 function bytesToGb(value) {
   if (!isNumber(value)) return null;
-  return Math.round((Number(value) / (1024 ** 3)) * 10) / 10;
+  return Math.round((Number(value) / 1024 ** 3) * 10) / 10;
 }
 
 function ramText(ram = {}) {
@@ -58,14 +58,22 @@ export default function OverlayApp() {
   useEffect(() => {
     if (!window.api?.overlay) return undefined;
     let mounted = true;
-    window.api.overlay.getSettings().then((result) => {
-      if (mounted && result?.settings) setSettings({ ...DEFAULT_SETTINGS, ...result.settings });
-    }).catch(() => {});
-    window.api.overlay.getSnapshot().then((snapshot) => {
-      if (mounted) setMetrics(snapshot);
-    }).catch(() => {});
+    window.api.overlay
+      .getSettings()
+      .then((result) => {
+        if (mounted && result?.settings) setSettings({ ...DEFAULT_SETTINGS, ...result.settings });
+      })
+      .catch(() => {});
+    window.api.overlay
+      .getSnapshot()
+      .then((snapshot) => {
+        if (mounted) setMetrics(snapshot);
+      })
+      .catch(() => {});
     const offMetrics = window.api.overlay.onMetrics((snapshot) => setMetrics(snapshot));
-    const offSettings = window.api.overlay.onSettings((next) => setSettings({ ...DEFAULT_SETTINGS, ...next }));
+    const offSettings = window.api.overlay.onSettings((next) =>
+      setSettings({ ...DEFAULT_SETTINGS, ...next }),
+    );
     return () => {
       mounted = false;
       offMetrics && offMetrics();
@@ -73,10 +81,13 @@ export default function OverlayApp() {
     };
   }, []);
 
-  const style = useMemo(() => ({
-    '--overlay-font-size': `${settings.fontSize || 14}px`,
-    '--overlay-opacity': settings.opacity ?? 0.92,
-  }), [settings.fontSize, settings.opacity]);
+  const style = useMemo(
+    () => ({
+      '--overlay-font-size': `${settings.fontSize || 14}px`,
+      '--overlay-opacity': settings.opacity ?? 0.92,
+    }),
+    [settings.fontSize, settings.opacity],
+  );
 
   const fps = metrics?.fps || {};
   const cpu = metrics?.cpu || {};
@@ -84,7 +95,10 @@ export default function OverlayApp() {
   const ram = metrics?.ram || {};
 
   return (
-    <div className={`overlay-osd-root ${settings.clickThrough === false ? 'is-draggable' : ''}`} style={style}>
+    <div
+      className={`overlay-osd-root ${settings.clickThrough === false ? 'is-draggable' : ''}`}
+      style={style}
+    >
       <div className="overlay-osd-line">
         {settings.showFps !== false ? (
           <span className="overlay-group overlay-fps">

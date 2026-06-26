@@ -18,7 +18,8 @@ const MAX_EVENTS = 300;
 
 function userDataPath(fileName) {
   try {
-    if (electronApp && electronApp.isReady()) return path.join(electronApp.getPath('userData'), fileName);
+    if (electronApp && electronApp.isReady())
+      return path.join(electronApp.getPath('userData'), fileName);
   } catch (_) {
     // fall through
   }
@@ -43,7 +44,11 @@ async function readEvents() {
 async function writeEvents(events) {
   const target = notificationPath();
   await fs.promises.mkdir(path.dirname(target), { recursive: true });
-  await fs.promises.writeFile(target, JSON.stringify(events.slice(0, MAX_EVENTS), null, 2), 'utf-8');
+  await fs.promises.writeFile(
+    target,
+    JSON.stringify(events.slice(0, MAX_EVENTS), null, 2),
+    'utf-8',
+  );
   return target;
 }
 
@@ -69,7 +74,10 @@ function showNative(title, body) {
     if (!ElectronNotification || !ElectronNotification.isSupported()) {
       return { ok: false, error: '此系統不支援桌面通知' };
     }
-    const notification = new ElectronNotification({ title: title || 'PC Life Assistant', body: body || '' });
+    const notification = new ElectronNotification({
+      title: title || 'PC Life Assistant',
+      body: body || '',
+    });
     notification.show();
     return { ok: true };
   } catch (err) {
@@ -79,8 +87,14 @@ function showNative(title, body) {
 
 function notify(title, body, options = {}) {
   const level = options.level || 'info';
-  addEvent({ title, body, level, source: options.source || 'system', action: options.action || null, details: options.details || null })
-    .catch(() => {});
+  addEvent({
+    title,
+    body,
+    level,
+    source: options.source || 'system',
+    action: options.action || null,
+    details: options.details || null,
+  }).catch(() => {});
   return showNative(title, body);
 }
 
@@ -96,7 +110,7 @@ async function listEvents() {
 
 async function markRead(id) {
   const events = await readEvents();
-  const next = events.map((event) => id && event.id !== id ? event : { ...event, read: true });
+  const next = events.map((event) => (id && event.id !== id ? event : { ...event, read: true }));
   await writeEvents(next);
   return { ok: true, events: next };
 }

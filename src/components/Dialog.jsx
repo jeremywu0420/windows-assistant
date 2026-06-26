@@ -19,8 +19,12 @@ export default function Dialog({
         <h3>{title}</h3>
         {message ? <p>{message}</p> : null}
         <div className="dialog-actions">
-          <Button variant="ghost" onClick={onCancel}>{cancelLabel}</Button>
-          <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>{confirmLabel}</Button>
+          <Button variant="ghost" onClick={onCancel}>
+            {cancelLabel}
+          </Button>
+          <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
         </div>
       </div>
     </div>

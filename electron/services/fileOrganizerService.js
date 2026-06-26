@@ -53,11 +53,16 @@ function queryRegistryDownloads() {
     if (process.platform !== 'win32') return resolve(null);
     const key = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders';
     const guid = '{374DE290-123F-4565-9164-39C4925E467B}';
-    execFile('reg', ['query', key, '/v', guid], { timeout: 5000, windowsHide: true }, (err, stdout) => {
-      if (err || !stdout) return resolve(null);
-      const match = stdout.match(/REG_(?:EXPAND_)?SZ\s+(.+?)\s*$/m);
-      resolve(match ? expandEnv(match[1].trim()) : null);
-    });
+    execFile(
+      'reg',
+      ['query', key, '/v', guid],
+      { timeout: 5000, windowsHide: true },
+      (err, stdout) => {
+        if (err || !stdout) return resolve(null);
+        const match = stdout.match(/REG_(?:EXPAND_)?SZ\s+(.+?)\s*$/m);
+        resolve(match ? expandEnv(match[1].trim()) : null);
+      },
+    );
   });
 }
 
@@ -103,11 +108,17 @@ async function detectDownloads() {
       return { ok: true, path: candidate, candidates: Array.from(seen) };
     }
   }
-  return { ok: false, path: path.join(os.homedir(), 'Downloads'), error: 'Could not detect Downloads folder.', candidates: Array.from(seen) };
+  return {
+    ok: false,
+    path: path.join(os.homedir(), 'Downloads'),
+    error: 'Could not detect Downloads folder.',
+    candidates: Array.from(seen),
+  };
 }
 
 async function getDefaultPath() {
-  if (cachedDetected && await pathIsDirectory(cachedDetected)) return { ok: true, path: cachedDetected };
+  if (cachedDetected && (await pathIsDirectory(cachedDetected)))
+    return { ok: true, path: cachedDetected };
   return detectDownloads();
 }
 
@@ -132,10 +143,18 @@ async function getSettings() {
     return { ok: true, path: target, settings: normalizeSettings(JSON.parse(raw)) };
   } catch (err) {
     if (err.code !== 'ENOENT') {
-      return { ok: false, path: target, settings: { ...DEFAULT_DOWNLOAD_SETTINGS }, error: err.message };
+      return {
+        ok: false,
+        path: target,
+        settings: { ...DEFAULT_DOWNLOAD_SETTINGS },
+        error: err.message,
+      };
     }
     const detected = await getDefaultPath();
-    const settings = normalizeSettings({ ...DEFAULT_DOWNLOAD_SETTINGS, folderPath: detected.path || '' });
+    const settings = normalizeSettings({
+      ...DEFAULT_DOWNLOAD_SETTINGS,
+      folderPath: detected.path || '',
+    });
     await saveSettings(settings);
     return { ok: true, path: target, settings };
   }
@@ -234,19 +253,20 @@ async function walkFiles(rootPath, settings, errors, current = rootPath, depth =
         if (!settings.includeSubfolders) continue;
         if (settings.skipCategoryFolders && isCategoryFolderName(entry.name)) {
           if (settings.subdivideDocuments !== false && entry.name.toLowerCase() === 'documents') {
-            files.push(...await walkFiles(rootPath, settings, errors, full, depth + 1));
+            files.push(...(await walkFiles(rootPath, settings, errors, full, depth + 1)));
           }
           continue;
         }
         const relParts = relativeParts(rootPath, full);
         if (
-          settings.skipCategoryFolders
-          && relParts[0] && relParts[0].toLowerCase() === 'documents'
-          && isDocumentSubcategoryFolderName(entry.name)
+          settings.skipCategoryFolders &&
+          relParts[0] &&
+          relParts[0].toLowerCase() === 'documents' &&
+          isDocumentSubcategoryFolderName(entry.name)
         ) {
           continue;
         }
-        files.push(...await walkFiles(rootPath, settings, errors, full, depth + 1));
+        files.push(...(await walkFiles(rootPath, settings, errors, full, depth + 1)));
       } else if (entry.isFile()) {
         files.push(full);
       }
@@ -276,7 +296,7 @@ function relativeOrFull(rootPath, filePath, showFullPaths) {
 async function scan(folderPath, scanOptions = {}) {
   const saved = await getSettings();
   const settings = normalizeSettings({ ...(saved.settings || {}), ...scanOptions });
-  const rootPath = folderPath || settings.folderPath || await resolveDownloadsPath();
+  const rootPath = folderPath || settings.folderPath || (await resolveDownloadsPath());
   const result = {
     ok: true,
     downloadsPath: rootPath,
@@ -292,7 +312,7 @@ async function scan(folderPath, scanOptions = {}) {
     errorFiles: 0,
   };
 
-  if (!await pathIsDirectory(rootPath)) {
+  if (!(await pathIsDirectory(rootPath))) {
     return { ...result, ok: false, error: `Folder not found: ${rootPath}` };
   }
 
@@ -302,7 +322,12 @@ async function scan(folderPath, scanOptions = {}) {
   for (const sourcePath of files) {
     try {
       const classification = classifyFile(path.basename(sourcePath), settings);
-      const skipReason = skipReasonForCategoryFolder(rootPath, sourcePath, classification, settings);
+      const skipReason = skipReasonForCategoryFolder(
+        rootPath,
+        sourcePath,
+        classification,
+        settings,
+      );
       if (skipReason) {
         result.skippedItems.push({
           name: path.basename(sourcePath),
@@ -333,9 +358,15 @@ async function scan(folderPath, scanOptions = {}) {
         displayTargetDir: relativeOrFull(rootPath, targetDir, settings.showFullPaths),
         status: 'ready',
       });
-      result.byCategory[classification.categoryPath] = (result.byCategory[classification.categoryPath] || 0) + 1;
+      result.byCategory[classification.categoryPath] =
+        (result.byCategory[classification.categoryPath] || 0) + 1;
     } catch (err) {
-      result.errors.push({ path: sourcePath, name: path.basename(sourcePath), status: 'error', error: err.message });
+      result.errors.push({
+        path: sourcePath,
+        name: path.basename(sourcePath),
+        status: 'error',
+        error: err.message,
+      });
     }
   }
 
@@ -351,7 +382,11 @@ async function scan(folderPath, scanOptions = {}) {
         label: rule.label,
         count: result.byCategory[category],
         targetDir: path.join(rootPath, ...category.split('/')),
-        examples: rule.exts.length ? rule.exts.slice(0, 8) : category === 'No Extension' ? ['(none)'] : ['unmatched'],
+        examples: rule.exts.length
+          ? rule.exts.slice(0, 8)
+          : category === 'No Extension'
+            ? ['(none)']
+            : ['unmatched'],
       };
     });
 
@@ -513,7 +548,13 @@ async function restoreLast() {
   const history = await readHistoryFile();
   const batch = history[0];
   if (!batch || !Array.isArray(batch.entries) || batch.entries.length === 0) {
-    return { ok: false, restored: 0, failed: 0, results: [], error: 'No organize history to restore.' };
+    return {
+      ok: false,
+      restored: 0,
+      failed: 0,
+      results: [],
+      error: 'No organize history to restore.',
+    };
   }
 
   const results = [];
@@ -535,13 +576,22 @@ async function restoreLast() {
       const stat = await fs.promises.stat(entry.newPath);
       if (!stat.isFile()) throw new Error('Organized file no longer exists.');
       await fs.promises.mkdir(path.dirname(entry.originalPath), { recursive: true });
-      const dest = resolveCollision(path.dirname(entry.originalPath), path.basename(entry.originalPath));
+      const dest = resolveCollision(
+        path.dirname(entry.originalPath),
+        path.basename(entry.originalPath),
+      );
       await copyOrMove(entry.newPath, dest, 'move');
       restored += 1;
       results.push({ name: entry.fileName, from: entry.newPath, to: dest, status: 'restored' });
     } catch (err) {
       failed += 1;
-      results.push({ name: entry.fileName, from: entry.newPath, to: entry.originalPath, status: 'error', error: err.message });
+      results.push({
+        name: entry.fileName,
+        from: entry.newPath,
+        to: entry.originalPath,
+        status: 'error',
+        error: err.message,
+      });
     }
   }
 
@@ -554,7 +604,10 @@ async function restoreLast() {
 }
 
 function countUnsorted(override) {
-  const downloadsPath = override && String(override).trim() ? override : cachedDetected || path.join(os.homedir(), 'Downloads');
+  const downloadsPath =
+    override && String(override).trim()
+      ? override
+      : cachedDetected || path.join(os.homedir(), 'Downloads');
   try {
     const entries = fs.readdirSync(downloadsPath, { withFileTypes: true });
     return {

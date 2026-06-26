@@ -97,7 +97,9 @@ export default function Rules() {
                     <input
                       type="number"
                       value={rule.threshold}
-                      onChange={(event) => update(rule.id, { threshold: Number(event.target.value) })}
+                      onChange={(event) =>
+                        update(rule.id, { threshold: Number(event.target.value) })
+                      }
                     />
                     <span className="muted">{type.unit || ''}</span>
                     <select

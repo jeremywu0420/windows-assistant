@@ -161,15 +161,20 @@ export default function ModeEditor({ onSaved }) {
     load();
   }, []);
 
-  const summary = useMemo(() => ({
-    apps: mode?.apps?.length || 0,
-    folders: mode?.folders?.length || 0,
-    urls: mode?.urls?.length || 0,
-    commands: mode?.commands?.length || 0,
-  }), [mode]);
+  const summary = useMemo(
+    () => ({
+      apps: mode?.apps?.length || 0,
+      folders: mode?.folders?.length || 0,
+      urls: mode?.urls?.length || 0,
+      commands: mode?.commands?.length || 0,
+    }),
+    [mode],
+  );
 
   const updateMode = (patch) => {
-    setModes((previous) => previous.map((item, index) => (index === selected ? { ...item, ...patch } : item)));
+    setModes((previous) =>
+      previous.map((item, index) => (index === selected ? { ...item, ...patch } : item)),
+    );
   };
 
   const addMode = () => {
@@ -217,9 +222,14 @@ export default function ModeEditor({ onSaved }) {
     updateMode({ [key]: next });
   };
 
-  const addApp = () => updateMode({ apps: [...mode.apps, { path: '', name: '', icon: '', workspaceFolder: '' }] });
-  const setApp = (index, patch) => updateMode({ apps: mode.apps.map((app, itemIndex) => (itemIndex === index ? { ...app, ...patch } : app)) });
-  const removeApp = (index) => updateMode({ apps: mode.apps.filter((_, itemIndex) => itemIndex !== index) });
+  const addApp = () =>
+    updateMode({ apps: [...mode.apps, { path: '', name: '', icon: '', workspaceFolder: '' }] });
+  const setApp = (index, patch) =>
+    updateMode({
+      apps: mode.apps.map((app, itemIndex) => (itemIndex === index ? { ...app, ...patch } : app)),
+    });
+  const removeApp = (index) =>
+    updateMode({ apps: mode.apps.filter((_, itemIndex) => itemIndex !== index) });
 
   const pickApp = async (index) => {
     const result = await window.api.pickPath({
@@ -237,7 +247,10 @@ export default function ModeEditor({ onSaved }) {
   };
 
   const pickAppWorkspace = async (index) => {
-    const result = await window.api.pickPath({ type: 'folder', title: '選擇 VS Code 要開啟的工作資料夾' });
+    const result = await window.api.pickPath({
+      type: 'folder',
+      title: '選擇 VS Code 要開啟的工作資料夾',
+    });
     if (result.ok) {
       setApp(index, { workspaceFolder: result.path });
       validate(result.path);
@@ -245,8 +258,10 @@ export default function ModeEditor({ onSaved }) {
   };
 
   const addString = (key) => updateMode({ [key]: [...mode[key], ''] });
-  const setString = (key, index, value) => updateMode({ [key]: mode[key].map((item, itemIndex) => (itemIndex === index ? value : item)) });
-  const removeString = (key, index) => updateMode({ [key]: mode[key].filter((_, itemIndex) => itemIndex !== index) });
+  const setString = (key, index, value) =>
+    updateMode({ [key]: mode[key].map((item, itemIndex) => (itemIndex === index ? value : item)) });
+  const removeString = (key, index) =>
+    updateMode({ [key]: mode[key].filter((_, itemIndex) => itemIndex !== index) });
 
   const pickFolderInto = async (index) => {
     const result = await window.api.pickPath({ type: 'folder', title: '選擇資料夾' });
@@ -257,8 +272,14 @@ export default function ModeEditor({ onSaved }) {
   };
 
   const addCommand = () => updateMode({ commands: [...mode.commands, { cwd: '', command: '' }] });
-  const setCommand = (index, patch) => updateMode({ commands: mode.commands.map((command, itemIndex) => (itemIndex === index ? { ...command, ...patch } : command)) });
-  const removeCommand = (index) => updateMode({ commands: mode.commands.filter((_, itemIndex) => itemIndex !== index) });
+  const setCommand = (index, patch) =>
+    updateMode({
+      commands: mode.commands.map((command, itemIndex) =>
+        itemIndex === index ? { ...command, ...patch } : command,
+      ),
+    });
+  const removeCommand = (index) =>
+    updateMode({ commands: mode.commands.filter((_, itemIndex) => itemIndex !== index) });
 
   const pickCommandCwd = async (index) => {
     const result = await window.api.pickPath({ type: 'folder', title: '選擇命令執行目錄' });
@@ -278,7 +299,10 @@ export default function ModeEditor({ onSaved }) {
         folders: item.folders.map((folder) => folder.trim()).filter(Boolean),
         urls: item.urls.map((url) => url.trim()).filter(Boolean),
         commands: item.commands
-          .map((command) => ({ cwd: (command.cwd || '').trim(), command: (command.command || '').trim() }))
+          .map((command) => ({
+            cwd: (command.cwd || '').trim(),
+            command: (command.command || '').trim(),
+          }))
           .filter((command) => command.command),
       }));
 
@@ -298,14 +322,36 @@ export default function ModeEditor({ onSaved }) {
     const check = pathChecks[trimmed];
     if (!check) return <StatusBadge tone="muted">未檢查</StatusBadge>;
     const typeOk = want === 'file' ? check.isFile : check.isDir;
-    return check.exists && typeOk ? <StatusBadge tone="ok">有效</StatusBadge> : <StatusBadge tone="danger">無效</StatusBadge>;
+    return check.exists && typeOk ? (
+      <StatusBadge tone="ok">有效</StatusBadge>
+    ) : (
+      <StatusBadge tone="danger">無效</StatusBadge>
+    );
   };
 
   const RowButtons = ({ listKey, index, length, onRemove }) => (
     <div className="inline-controls compact-controls">
-      <Button size="sm" variant="ghost" disabled={index === 0} onClick={() => move(listKey, index, -1)} title="上移">UP</Button>
-      <Button size="sm" variant="ghost" disabled={index === length - 1} onClick={() => move(listKey, index, 1)} title="下移">DN</Button>
-      <Button size="sm" variant="ghost" onClick={onRemove} title="刪除">DEL</Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={index === 0}
+        onClick={() => move(listKey, index, -1)}
+        title="上移"
+      >
+        UP
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={index === length - 1}
+        onClick={() => move(listKey, index, 1)}
+        title="下移"
+      >
+        DN
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onRemove} title="刪除">
+        DEL
+      </Button>
     </div>
   );
 
@@ -326,28 +372,49 @@ export default function ModeEditor({ onSaved }) {
           <p className="muted">調整會先留在畫面中，按下儲存後才會寫入設定檔。</p>
         </div>
         <div className="head-actions">
-          <Button icon="AD" onClick={addMode}>新增模式</Button>
-          <Button icon="SV" variant="primary" onClick={save}>儲存設定</Button>
+          <Button icon="AD" onClick={addMode}>
+            新增模式
+          </Button>
+          <Button icon="SV" variant="primary" onClick={save}>
+            儲存設定
+          </Button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '12px 0' }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          margin: '12px 0',
+        }}
+      >
         <span className="muted">EE 範本：</span>
         {MODE_PRESETS.map((preset) => (
-          <Button key={preset.name} size="sm" onClick={() => addPresetMode(preset)}>{preset.name}</Button>
+          <Button key={preset.name} size="sm" onClick={() => addPresetMode(preset)}>
+            {preset.name}
+          </Button>
         ))}
       </div>
 
       {modes.length === 0 ? (
         <div className="empty-editor">
           <p className="muted">還沒有任何模式。先新增一個模式開始。</p>
-          <Button variant="primary" onClick={addMode}>新增模式</Button>
+          <Button variant="primary" onClick={addMode}>
+            新增模式
+          </Button>
         </div>
       ) : (
         <>
           <div className="mode-tabs">
             {modes.map((item, index) => (
-              <button key={`${item.name}-${index}`} className={`ui-btn ${index === selected ? 'primary' : 'ghost'}`} onClick={() => setSelected(index)} type="button">
+              <button
+                key={`${item.name}-${index}`}
+                className={`ui-btn ${index === selected ? 'primary' : 'ghost'}`}
+                onClick={() => setSelected(index)}
+                type="button"
+              >
                 {item.name || '(未命名)'}
               </button>
             ))}
@@ -368,60 +435,172 @@ export default function ModeEditor({ onSaved }) {
                   <div className="desc">名稱會顯示在工作模式頁、命令面板與執行結果中。</div>
                 </div>
                 <div className="inline-controls">
-                  <input style={{ ...inputStyle, minWidth: 260 }} value={mode.name} onChange={(event) => updateMode({ name: event.target.value })} />
-                  <Button size="sm" onClick={duplicateMode}>複製</Button>
-                  <Button size="sm" variant="danger" onClick={deleteMode}>刪除</Button>
+                  <input
+                    style={{ ...inputStyle, minWidth: 260 }}
+                    value={mode.name}
+                    onChange={(event) => updateMode({ name: event.target.value })}
+                  />
+                  <Button size="sm" onClick={duplicateMode}>
+                    複製
+                  </Button>
+                  <Button size="sm" variant="danger" onClick={deleteMode}>
+                    刪除
+                  </Button>
                 </div>
               </div>
 
-              <ListSection title="App" description="可加入 VS Code、瀏覽器或其他桌面程式。" action={<Button size="sm" onClick={addApp}>新增 App</Button>}>
+              <ListSection
+                title="App"
+                description="可加入 VS Code、瀏覽器或其他桌面程式。"
+                action={
+                  <Button size="sm" onClick={addApp}>
+                    新增 App
+                  </Button>
+                }
+              >
                 {mode.apps.length === 0 ? <p className="muted">尚未加入 App。</p> : null}
                 {mode.apps.map((app, index) => (
                   <div className="editor-row mode-app-row" key={`app-${index}`}>
-                    <input style={{ ...inputStyle, width: 58, textAlign: 'center' }} placeholder="圖示" value={app.icon} onChange={(event) => setApp(index, { icon: event.target.value })} />
-                    <input style={{ ...inputStyle, width: 140 }} placeholder="名稱" value={app.name} onChange={(event) => setApp(index, { name: event.target.value })} />
-                    <input style={pathInputStyle} placeholder="C:\\...\\Code.exe" value={app.path} onChange={(event) => setApp(index, { path: event.target.value })} onBlur={(event) => validate(event.target.value)} />
+                    <input
+                      style={{ ...inputStyle, width: 58, textAlign: 'center' }}
+                      placeholder="圖示"
+                      value={app.icon}
+                      onChange={(event) => setApp(index, { icon: event.target.value })}
+                    />
+                    <input
+                      style={{ ...inputStyle, width: 140 }}
+                      placeholder="名稱"
+                      value={app.name}
+                      onChange={(event) => setApp(index, { name: event.target.value })}
+                    />
+                    <input
+                      style={pathInputStyle}
+                      placeholder="C:\\...\\Code.exe"
+                      value={app.path}
+                      onChange={(event) => setApp(index, { path: event.target.value })}
+                      onBlur={(event) => validate(event.target.value)}
+                    />
                     <PathStatus pathValue={app.path} want="file" />
-                    <Button size="sm" onClick={() => pickApp(index)}>選擇</Button>
-                    <input style={pathInputStyle} placeholder="VS Code 工作資料夾（選填）" value={app.workspaceFolder} onChange={(event) => setApp(index, { workspaceFolder: event.target.value })} onBlur={(event) => validate(event.target.value)} />
+                    <Button size="sm" onClick={() => pickApp(index)}>
+                      選擇
+                    </Button>
+                    <input
+                      style={pathInputStyle}
+                      placeholder="VS Code 工作資料夾（選填）"
+                      value={app.workspaceFolder}
+                      onChange={(event) => setApp(index, { workspaceFolder: event.target.value })}
+                      onBlur={(event) => validate(event.target.value)}
+                    />
                     <PathStatus pathValue={app.workspaceFolder} want="dir" />
-                    <Button size="sm" onClick={() => pickAppWorkspace(index)}>工作夾</Button>
-                    <RowButtons listKey="apps" index={index} length={mode.apps.length} onRemove={() => removeApp(index)} />
+                    <Button size="sm" onClick={() => pickAppWorkspace(index)}>
+                      工作夾
+                    </Button>
+                    <RowButtons
+                      listKey="apps"
+                      index={index}
+                      length={mode.apps.length}
+                      onRemove={() => removeApp(index)}
+                    />
                   </div>
                 ))}
               </ListSection>
 
-              <ListSection title="資料夾" description="會用檔案總管開啟。" action={<Button size="sm" onClick={() => addString('folders')}>新增資料夾</Button>}>
+              <ListSection
+                title="資料夾"
+                description="會用檔案總管開啟。"
+                action={
+                  <Button size="sm" onClick={() => addString('folders')}>
+                    新增資料夾
+                  </Button>
+                }
+              >
                 {mode.folders.length === 0 ? <p className="muted">尚未加入資料夾。</p> : null}
                 {mode.folders.map((folder, index) => (
                   <div className="editor-row" key={`folder-${index}`}>
-                    <input style={pathInputStyle} placeholder="C:\\Users\\jerem\\Desktop\\..." value={folder} onChange={(event) => setString('folders', index, event.target.value)} onBlur={(event) => validate(event.target.value)} />
+                    <input
+                      style={pathInputStyle}
+                      placeholder="C:\\Users\\jerem\\Desktop\\..."
+                      value={folder}
+                      onChange={(event) => setString('folders', index, event.target.value)}
+                      onBlur={(event) => validate(event.target.value)}
+                    />
                     <PathStatus pathValue={folder} want="dir" />
-                    <Button size="sm" onClick={() => pickFolderInto(index)}>選擇</Button>
-                    <RowButtons listKey="folders" index={index} length={mode.folders.length} onRemove={() => removeString('folders', index)} />
+                    <Button size="sm" onClick={() => pickFolderInto(index)}>
+                      選擇
+                    </Button>
+                    <RowButtons
+                      listKey="folders"
+                      index={index}
+                      length={mode.folders.length}
+                      onRemove={() => removeString('folders', index)}
+                    />
                   </div>
                 ))}
               </ListSection>
 
-              <ListSection title="網址" description="適合加入 GitHub、文件或本機開發網址。" action={<Button size="sm" onClick={() => addString('urls')}>新增網址</Button>}>
+              <ListSection
+                title="網址"
+                description="適合加入 GitHub、文件或本機開發網址。"
+                action={
+                  <Button size="sm" onClick={() => addString('urls')}>
+                    新增網址
+                  </Button>
+                }
+              >
                 {mode.urls.length === 0 ? <p className="muted">尚未加入網址。</p> : null}
                 {mode.urls.map((url, index) => (
                   <div className="editor-row" key={`url-${index}`}>
-                    <input style={pathInputStyle} placeholder="https://github.com/..." value={url} onChange={(event) => setString('urls', index, event.target.value)} />
-                    <RowButtons listKey="urls" index={index} length={mode.urls.length} onRemove={() => removeString('urls', index)} />
+                    <input
+                      style={pathInputStyle}
+                      placeholder="https://github.com/..."
+                      value={url}
+                      onChange={(event) => setString('urls', index, event.target.value)}
+                    />
+                    <RowButtons
+                      listKey="urls"
+                      index={index}
+                      length={mode.urls.length}
+                      onRemove={() => removeString('urls', index)}
+                    />
                   </div>
                 ))}
               </ListSection>
 
-              <ListSection title="命令" description="可啟動 npm run dev、Python script 或其他 shell 命令。" action={<Button size="sm" onClick={addCommand}>新增命令</Button>}>
+              <ListSection
+                title="命令"
+                description="可啟動 npm run dev、Python script 或其他 shell 命令。"
+                action={
+                  <Button size="sm" onClick={addCommand}>
+                    新增命令
+                  </Button>
+                }
+              >
                 {mode.commands.length === 0 ? <p className="muted">尚未加入命令。</p> : null}
                 {mode.commands.map((command, index) => (
                   <div className="editor-row" key={`command-${index}`}>
-                    <input style={{ ...pathInputStyle, maxWidth: 280 }} placeholder="執行目錄" value={command.cwd} onChange={(event) => setCommand(index, { cwd: event.target.value })} onBlur={(event) => validate(event.target.value)} />
+                    <input
+                      style={{ ...pathInputStyle, maxWidth: 280 }}
+                      placeholder="執行目錄"
+                      value={command.cwd}
+                      onChange={(event) => setCommand(index, { cwd: event.target.value })}
+                      onBlur={(event) => validate(event.target.value)}
+                    />
                     <PathStatus pathValue={command.cwd} want="dir" />
-                    <Button size="sm" onClick={() => pickCommandCwd(index)}>選擇</Button>
-                    <input style={pathInputStyle} placeholder="npm run dev" value={command.command} onChange={(event) => setCommand(index, { command: event.target.value })} />
-                    <RowButtons listKey="commands" index={index} length={mode.commands.length} onRemove={() => removeCommand(index)} />
+                    <Button size="sm" onClick={() => pickCommandCwd(index)}>
+                      選擇
+                    </Button>
+                    <input
+                      style={pathInputStyle}
+                      placeholder="npm run dev"
+                      value={command.command}
+                      onChange={(event) => setCommand(index, { command: event.target.value })}
+                    />
+                    <RowButtons
+                      listKey="commands"
+                      index={index}
+                      length={mode.commands.length}
+                      onRemove={() => removeCommand(index)}
+                    />
                   </div>
                 ))}
               </ListSection>

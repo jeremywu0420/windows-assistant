@@ -137,10 +137,14 @@ export default function CleanCenter() {
     if (!window.api?.cleanup) return;
     // allSettled so one failing IPC doesn't reject the whole load; missing values become null.
     const settled = await Promise.allSettled([
-      window.api.cleanup.getSummary ? window.api.cleanup.getSummary() : window.api.cleanup.getStatus(),
+      window.api.cleanup.getSummary
+        ? window.api.cleanup.getSummary()
+        : window.api.cleanup.getStatus(),
       window.api.cleanup.getLogs(),
     ]);
-    const [summaryResult, logsResult] = settled.map((entry) => (entry.status === 'fulfilled' ? entry.value : null));
+    const [summaryResult, logsResult] = settled.map((entry) =>
+      entry.status === 'fulfilled' ? entry.value : null,
+    );
     if (summaryResult?.ok) setStatus(summaryResult);
     if (logsResult?.ok) setLogs(logsResult.logs || []);
   }, []);
@@ -159,20 +163,27 @@ export default function CleanCenter() {
       return;
     }
     setScanResult(result);
-    setSelected(new Set((result.items || []).filter((item) => item.selectedDefault).map((item) => item.id)));
+    setSelected(
+      new Set((result.items || []).filter((item) => item.selectedDefault).map((item) => item.id)),
+    );
     toast(`掃描完成：找到 ${result.summary.totalCount} 個項目`, 'ok');
     load();
   };
 
   const items = scanResult?.items || [];
-  const selectedItems = useMemo(() => items.filter((item) => selected.has(item.id)), [items, selected]);
+  const selectedItems = useMemo(
+    () => items.filter((item) => selected.has(item.id)),
+    [items, selected],
+  );
   const safeSelectedItems = useMemo(
     () => selectedItems.filter((item) => normalizeRisk(item.risk) === RISK_SAFE),
     [selectedItems],
   );
   const selectedSize = selectedItems.reduce((sum, item) => sum + Number(item.size || 0), 0);
   const safeSelectedSize = safeSelectedItems.reduce((sum, item) => sum + Number(item.size || 0), 0);
-  const selectedNeedsReview = selectedItems.filter((item) => normalizeRisk(item.risk) !== RISK_SAFE).length;
+  const selectedNeedsReview = selectedItems.filter(
+    (item) => normalizeRisk(item.risk) !== RISK_SAFE,
+  ).length;
 
   const toggleItem = (item) => {
     setSelected((prev) => {
@@ -194,18 +205,28 @@ export default function CleanCenter() {
     setBusy(false);
     setReport(result);
     setSelected(new Set());
-    toast(`清理完成：成功 ${result.cleaned || 0}，跳過 ${result.skipped || 0}，失敗 ${result.failed || 0}`, result.failed ? 'warn' : 'ok');
+    toast(
+      `清理完成：成功 ${result.cleaned || 0}，跳過 ${result.skipped || 0}，失敗 ${result.failed || 0}`,
+      result.failed ? 'warn' : 'ok',
+    );
     await load();
     const refreshed = await window.api.cleanup.scan({});
     if (refreshed.ok) {
       setScanResult(refreshed);
-      setSelected(new Set((refreshed.items || []).filter((item) => item.selectedDefault).map((item) => item.id)));
+      setSelected(
+        new Set(
+          (refreshed.items || []).filter((item) => item.selectedDefault).map((item) => item.id),
+        ),
+      );
     }
   };
 
   const exportLogs = async () => {
     const result = await window.api.cleanup.exportLogs('json');
-    toast(result.ok ? `已匯出清理紀錄：${result.path}` : result.error || '匯出失敗', result.ok ? 'ok' : 'error');
+    toast(
+      result.ok ? `已匯出清理紀錄：${result.path}` : result.error || '匯出失敗',
+      result.ok ? 'ok' : 'error',
+    );
   };
 
   const summary = scanResult?.summary || {};
@@ -218,26 +239,51 @@ export default function CleanCenter() {
         eyebrow="ORGANIZE"
         title="Clean Center"
         description="以保守規則掃描暫存、快取、大檔與重複檔案；清理前先確認，清理後提供完整報告。"
-        actions={(
+        actions={
           <>
-            <Button variant="ghost" onClick={exportLogs}>匯出紀錄</Button>
-            <Button variant="primary" onClick={runScan} busy={busy}>重新掃描</Button>
+            <Button variant="ghost" onClick={exportLogs}>
+              匯出紀錄
+            </Button>
+            <Button variant="primary" onClick={runScan} busy={busy}>
+              重新掃描
+            </Button>
           </>
-        )}
+        }
       />
 
       <InlineAlert tone="warn" title="安全清理規則">
-        Windows Temp / User Temp 只會預設勾選最後修改超過 7 天的檔案；24 小時內的檔案、Installer / Driver / Windows Update 相關暫存、以及 Downloads / Desktop / Documents 內的檔案不會自動清理。
+        Windows Temp / User Temp 只會預設勾選最後修改超過 7 天的檔案；24 小時內的檔案、Installer /
+        Driver / Windows Update 相關暫存、以及 Downloads / Desktop / Documents
+        內的檔案不會自動清理。
       </InlineAlert>
 
       <div className="metric-grid cleanup-summary-grid">
-        <div className="card status-card"><div className="label">掃描項目</div><div className="value">{summary.totalCount ?? '--'}</div><div className="sub">目前掃描到的可檢視項目</div></div>
-        <div className="card status-card"><div className="label">可檢視容量</div><div className="value">{formatBytes(summary.totalSize)}</div><div className="sub">包含需確認與不建議自動清理項目</div></div>
-        <div className="card status-card"><div className="label">預設安全勾選</div><div className="value">{formatBytes(summary.selectedDefaultSize)}</div><div className="sub">符合保守規則的安全清理項目</div></div>
-        <div className="card status-card"><div className="label">需人工確認</div><div className="value">{summary.highRiskCount || 0}</div><div className="sub">不建議自動清理或永久刪除</div></div>
+        <div className="card status-card">
+          <div className="label">掃描項目</div>
+          <div className="value">{summary.totalCount ?? '--'}</div>
+          <div className="sub">目前掃描到的可檢視項目</div>
+        </div>
+        <div className="card status-card">
+          <div className="label">可檢視容量</div>
+          <div className="value">{formatBytes(summary.totalSize)}</div>
+          <div className="sub">包含需確認與不建議自動清理項目</div>
+        </div>
+        <div className="card status-card">
+          <div className="label">預設安全勾選</div>
+          <div className="value">{formatBytes(summary.selectedDefaultSize)}</div>
+          <div className="sub">符合保守規則的安全清理項目</div>
+        </div>
+        <div className="card status-card">
+          <div className="label">需人工確認</div>
+          <div className="value">{summary.highRiskCount || 0}</div>
+          <div className="sub">不建議自動清理或永久刪除</div>
+        </div>
       </div>
 
-      <SectionPanel title="分類掃描結果" description="每個分類都可以打開說明，先了解清理後的影響再決定。">
+      <SectionPanel
+        title="分類掃描結果"
+        description="每個分類都可以打開說明，先了解清理後的影響再決定。"
+      >
         <DataTable
           rows={rows}
           emptyTitle="尚未掃描"
@@ -246,9 +292,31 @@ export default function CleanCenter() {
             { key: 'name', label: '分類', render: (row) => row.name || row.category },
             { key: 'count', label: '數量' },
             { key: 'size', label: '容量', render: (row) => formatBytes(row.size) },
-            { key: 'risk', label: '風險等級', render: (row) => <StatusBadge tone={riskTone(row.risk)}>{normalizeRisk(row.risk)}</StatusBadge> },
-            { key: 'status', label: '狀態', render: (row) => row.status === 'Disabled' ? '停用' : '已掃描' },
-            { key: 'info', label: '說明', render: (row) => <Button size="sm" variant="ghost" onClick={() => setActiveInfo(row.name || row.category)}>說明</Button> },
+            {
+              key: 'risk',
+              label: '風險等級',
+              render: (row) => (
+                <StatusBadge tone={riskTone(row.risk)}>{normalizeRisk(row.risk)}</StatusBadge>
+              ),
+            },
+            {
+              key: 'status',
+              label: '狀態',
+              render: (row) => (row.status === 'Disabled' ? '停用' : '已掃描'),
+            },
+            {
+              key: 'info',
+              label: '說明',
+              render: (row) => (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setActiveInfo(row.name || row.category)}
+                >
+                  說明
+                </Button>
+              ),
+            },
           ]}
         />
       </SectionPanel>
@@ -256,11 +324,20 @@ export default function CleanCenter() {
       <SectionPanel
         title="檔案明細"
         description={`已選 ${selectedItems.length} 個項目，預估釋放 ${formatBytes(selectedSize)}。`}
-        actions={<Button variant="danger" disabled={selectedItems.length === 0 || busy} onClick={() => setConfirmOpen(true)}>清理已選項目</Button>}
+        actions={
+          <Button
+            variant="danger"
+            disabled={selectedItems.length === 0 || busy}
+            onClick={() => setConfirmOpen(true)}
+          >
+            清理已選項目
+          </Button>
+        }
       >
         {selectedNeedsReview ? (
           <InlineAlert tone="danger" title="包含需人工確認項目">
-            已選項目中有 {selectedNeedsReview} 個不是「安全清理」。你仍可清理，但建議先檢查來源路徑與清理影響。
+            已選項目中有 {selectedNeedsReview}{' '}
+            個不是「安全清理」。你仍可清理，但建議先檢查來源路徑與清理影響。
           </InlineAlert>
         ) : null}
         <DataTable
@@ -268,25 +345,70 @@ export default function CleanCenter() {
           emptyTitle="尚未找到檔案"
           emptyDescription="重新掃描後會顯示檔名、分類、容量、最後修改時間、風險、來源路徑與清理影響。"
           columns={[
-            { key: 'select', label: '', width: 42, render: (row) => <input type="checkbox" checked={selected.has(row.id)} onChange={() => toggleItem(row)} /> },
+            {
+              key: 'select',
+              label: '',
+              width: 42,
+              render: (row) => (
+                <input
+                  type="checkbox"
+                  checked={selected.has(row.id)}
+                  onChange={() => toggleItem(row)}
+                />
+              ),
+            },
             { key: 'fileName', label: '檔名', render: (row) => <strong>{row.fileName}</strong> },
             { key: 'category', label: '分類' },
             { key: 'size', label: '大小', render: (row) => formatBytes(row.size) },
             { key: 'mtime', label: '最後修改時間', render: (row) => formatTime(row.mtime) },
-            { key: 'risk', label: '風險等級', render: (row) => <StatusBadge tone={riskTone(row.risk)}>{normalizeRisk(row.risk)}</StatusBadge> },
-            { key: 'path', label: '來源路徑', className: 'path', render: (row) => <button className="link-button" onClick={() => openPath(row.path)}>{row.path}</button> },
-            { key: 'impact', label: '清理影響說明', render: (row) => row.cleanImpact || row.impact || '移到資源回收筒，可在清空前還原。' },
+            {
+              key: 'risk',
+              label: '風險等級',
+              render: (row) => (
+                <StatusBadge tone={riskTone(row.risk)}>{normalizeRisk(row.risk)}</StatusBadge>
+              ),
+            },
+            {
+              key: 'path',
+              label: '來源路徑',
+              className: 'path',
+              render: (row) => (
+                <button className="link-button" onClick={() => openPath(row.path)}>
+                  {row.path}
+                </button>
+              ),
+            },
+            {
+              key: 'impact',
+              label: '清理影響說明',
+              render: (row) => row.cleanImpact || row.impact || '移到資源回收筒，可在清空前還原。',
+            },
           ]}
         />
       </SectionPanel>
 
       {report ? (
-        <SectionPanel title="清理完成報告" description="每次清理都會留下摘要與詳細結果，方便追蹤發生了什麼。">
+        <SectionPanel
+          title="清理完成報告"
+          description="每次清理都會留下摘要與詳細結果，方便追蹤發生了什麼。"
+        >
           <div className="cleanup-report-grid">
-            <div><span>成功刪除</span><strong>{report.cleaned || report.report?.successCount || 0}</strong></div>
-            <div><span>釋放容量</span><strong>{formatBytes(report.freedSize || report.report?.freedSize)}</strong></div>
-            <div><span>跳過數量</span><strong>{report.skipped || report.report?.skippedCount || 0}</strong></div>
-            <div><span>失敗數量</span><strong>{report.failed || report.report?.failureCount || 0}</strong></div>
+            <div>
+              <span>成功刪除</span>
+              <strong>{report.cleaned || report.report?.successCount || 0}</strong>
+            </div>
+            <div>
+              <span>釋放容量</span>
+              <strong>{formatBytes(report.freedSize || report.report?.freedSize)}</strong>
+            </div>
+            <div>
+              <span>跳過數量</span>
+              <strong>{report.skipped || report.report?.skippedCount || 0}</strong>
+            </div>
+            <div>
+              <span>失敗數量</span>
+              <strong>{report.failed || report.report?.failureCount || 0}</strong>
+            </div>
           </div>
           {reportReasons.length ? (
             <div className="cleanup-reason-list">
@@ -294,7 +416,9 @@ export default function CleanCenter() {
               {reportReasons.slice(0, 20).map((row, index) => (
                 <div className="cleanup-reason-row" key={`${row.path}-${index}`}>
                   <strong>{row.fileName || row.path}</strong>
-                  <span>{row.status === 'skipped' ? '跳過' : '失敗'}：{row.reason}</span>
+                  <span>
+                    {row.status === 'skipped' ? '跳過' : '失敗'}：{row.reason}
+                  </span>
                   <code>{row.path}</code>
                 </div>
               ))}
@@ -303,7 +427,14 @@ export default function CleanCenter() {
         </SectionPanel>
       ) : null}
 
-      <SectionPanel title="掃描與清理紀錄" actions={<Button size="sm" variant="ghost" onClick={() => window.api.cleanup.openLogFile()}>開啟紀錄檔</Button>}>
+      <SectionPanel
+        title="掃描與清理紀錄"
+        actions={
+          <Button size="sm" variant="ghost" onClick={() => window.api.cleanup.openLogFile()}>
+            開啟紀錄檔
+          </Button>
+        }
+      >
         <DataTable
           rows={logs.slice(0, 12)}
           emptyTitle="尚無紀錄"
@@ -319,16 +450,32 @@ export default function CleanCenter() {
 
       {activeInfo ? (
         <div className="dialog-overlay" role="presentation" onClick={() => setActiveInfo(null)}>
-          <div className="dialog cleanup-info-dialog" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="dialog cleanup-info-dialog"
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
+          >
             <h3>{categoryInfo[activeInfo]?.title || activeInfo}</h3>
             <dl className="cleanup-info-list">
-              <dt>這個分類是什麼</dt><dd>{categoryInfo[activeInfo]?.what || '此分類用於顯示 Clean Center 掃描到的項目。'}</dd>
-              <dt>清理後會發生什麼</dt><dd>{categoryInfo[activeInfo]?.after || '項目會依清理方式移到資源回收筒或等待人工處理。'}</dd>
-              <dt>可能風險</dt><dd>{categoryInfo[activeInfo]?.risk || '請先確認來源路徑與檔案用途。'}</dd>
-              <dt>建議是否清理</dt><dd>{categoryInfo[activeInfo]?.recommendation || '建議確認後再清理。'}</dd>
+              <dt>這個分類是什麼</dt>
+              <dd>
+                {categoryInfo[activeInfo]?.what || '此分類用於顯示 Clean Center 掃描到的項目。'}
+              </dd>
+              <dt>清理後會發生什麼</dt>
+              <dd>
+                {categoryInfo[activeInfo]?.after ||
+                  '項目會依清理方式移到資源回收筒或等待人工處理。'}
+              </dd>
+              <dt>可能風險</dt>
+              <dd>{categoryInfo[activeInfo]?.risk || '請先確認來源路徑與檔案用途。'}</dd>
+              <dt>建議是否清理</dt>
+              <dd>{categoryInfo[activeInfo]?.recommendation || '建議確認後再清理。'}</dd>
             </dl>
             <div className="dialog-actions">
-              <Button variant="primary" onClick={() => setActiveInfo(null)}>了解</Button>
+              <Button variant="primary" onClick={() => setActiveInfo(null)}>
+                了解
+              </Button>
             </div>
           </div>
         </div>
@@ -336,20 +483,45 @@ export default function CleanCenter() {
 
       {confirmOpen ? (
         <div className="dialog-overlay" role="presentation" onClick={() => setConfirmOpen(false)}>
-          <div className="dialog cleanup-confirm-dialog" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+          <div
+            className="dialog cleanup-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            onClick={(event) => event.stopPropagation()}
+          >
             <h3>確認清理已選項目</h3>
             <div className="cleanup-confirm-summary">
-              <div><span>即將清理</span><strong>{selectedItems.length} 個檔案</strong></div>
-              <div><span>預估釋放</span><strong>{formatBytes(selectedSize)}</strong></div>
-              <div><span>安全項目</span><strong>{safeSelectedItems.length} 個 / {formatBytes(safeSelectedSize)}</strong></div>
+              <div>
+                <span>即將清理</span>
+                <strong>{selectedItems.length} 個檔案</strong>
+              </div>
+              <div>
+                <span>預估釋放</span>
+                <strong>{formatBytes(selectedSize)}</strong>
+              </div>
+              <div>
+                <span>安全項目</span>
+                <strong>
+                  {safeSelectedItems.length} 個 / {formatBytes(safeSelectedSize)}
+                </strong>
+              </div>
             </div>
             <InlineAlert tone="danger" title="清理前提醒">
               若有程式正在安裝、更新、下載或編譯，清理暫存檔可能導致該任務失敗。無法刪除或被鎖定的檔案會直接跳過，不會強制刪除。
             </InlineAlert>
             <div className="dialog-actions">
-              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>取消</Button>
-              <Button disabled={!safeSelectedItems.length || busy} onClick={() => cleanItems(safeSelectedItems)}>只清理安全項目</Button>
-              <Button variant="danger" disabled={busy} onClick={() => cleanItems(selectedItems)}>仍要清理</Button>
+              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+                取消
+              </Button>
+              <Button
+                disabled={!safeSelectedItems.length || busy}
+                onClick={() => cleanItems(safeSelectedItems)}
+              >
+                只清理安全項目
+              </Button>
+              <Button variant="danger" disabled={busy} onClick={() => cleanItems(selectedItems)}>
+                仍要清理
+              </Button>
             </div>
           </div>
         </div>

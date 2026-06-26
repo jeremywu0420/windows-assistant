@@ -93,14 +93,16 @@ async function detectDrives() {
   for (let code = 'C'.charCodeAt(0); code <= 'Z'.charCodeAt(0); code += 1) {
     letters.push(`${String.fromCharCode(code)}:\\`);
   }
-  const checks = await Promise.all(letters.map(async (drive) => {
-    try {
-      await fs.promises.statfs(drive);
-      return drive;
-    } catch (_) {
-      return null;
-    }
-  }));
+  const checks = await Promise.all(
+    letters.map(async (drive) => {
+      try {
+        await fs.promises.statfs(drive);
+        return drive;
+      } catch (_) {
+        return null;
+      }
+    }),
+  );
   const found = checks.filter(Boolean);
   return found.length > 0 ? found : [defaultDrivePath()];
 }
@@ -116,7 +118,10 @@ async function resolveDrives(options = {}) {
     drives = await detectDrives();
   }
 
-  if (process.platform === 'win32' && !drives.some((drive) => /^d:\\?$/i.test(String(drive).replace(/\//g, '\\')))) {
+  if (
+    process.platform === 'win32' &&
+    !drives.some((drive) => /^d:\\?$/i.test(String(drive).replace(/\//g, '\\')))
+  ) {
     try {
       await fs.promises.statfs('D:\\');
       drives.push('D:\\');
@@ -136,18 +141,23 @@ async function getDisksUsage(options = {}) {
 function execPowerShellJson(script, timeout = 5000) {
   return new Promise((resolve) => {
     if (process.platform !== 'win32') return resolve(null);
-    execFile('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], {
-      timeout,
-      windowsHide: true,
-      maxBuffer: 1024 * 1024,
-    }, (err, stdout) => {
-      if (err || !stdout) return resolve(null);
-      try {
-        resolve(JSON.parse(stdout));
-      } catch (_) {
-        resolve(null);
-      }
-    });
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      {
+        timeout,
+        windowsHide: true,
+        maxBuffer: 1024 * 1024,
+      },
+      (err, stdout) => {
+        if (err || !stdout) return resolve(null);
+        try {
+          resolve(JSON.parse(stdout));
+        } catch (_) {
+          resolve(null);
+        }
+      },
+    );
   });
 }
 
@@ -186,9 +196,10 @@ function temperatureSummary(temperatures = {}) {
   const cpuValues = cpuCores.map((item) => Number(item.temperatureC)).filter(Number.isFinite);
   const gpuValues = gpu.map((item) => Number(item.temperatureC)).filter(Number.isFinite);
   const cpuPowerWatts = Number(temperatures.cpuPowerWatts);
-  const avg = (rows) => rows.length
-    ? Math.round((rows.reduce((sum, value) => sum + value, 0) / rows.length) * 10) / 10
-    : null;
+  const avg = (rows) =>
+    rows.length
+      ? Math.round((rows.reduce((sum, value) => sum + value, 0) / rows.length) * 10) / 10
+      : null;
   return {
     cpuAvailable: cpuValues.length > 0,
     gpuAvailable: gpuValues.length > 0,
@@ -223,8 +234,12 @@ function hardwareSummary(temperatures = {}) {
 }
 
 function pushSample(metrics) {
-  const d = (metrics.disks || []).find((disk) => disk.ok && /^d:\\?$/i.test(String(disk.drive || '').replace(/\//g, '\\')));
-  const c = (metrics.disks || []).find((disk) => disk.ok && /^c:\\?$/i.test(String(disk.drive || '').replace(/\//g, '\\')));
+  const d = (metrics.disks || []).find(
+    (disk) => disk.ok && /^d:\\?$/i.test(String(disk.drive || '').replace(/\//g, '\\')),
+  );
+  const c = (metrics.disks || []).find(
+    (disk) => disk.ok && /^c:\\?$/i.test(String(disk.drive || '').replace(/\//g, '\\')),
+  );
   sampleHistory.push({
     time: new Date().toISOString(),
     cpu: metrics.cpu.usagePercent,
@@ -291,7 +306,7 @@ function computeHealthScore(metrics, extras = {}) {
       12,
       `RAM 使用率 ${metrics.memory.usagePercent}% 超過 85%`,
       '大型程式可能變慢，系統會更常使用磁碟分頁。',
-      '檢查 RAM Top List，關閉不需要的背景程式。'
+      '檢查 RAM Top List，關閉不需要的背景程式。',
     );
   } else if (metrics.memory.usagePercent > 75) {
     score -= addDeduction(
@@ -299,18 +314,20 @@ function computeHealthScore(metrics, extras = {}) {
       6,
       `RAM 使用率 ${metrics.memory.usagePercent}% 偏高`,
       '仍可使用，但切換大型 App 時可能較慢。',
-      '檢查 RAM Top List。'
+      '檢查 RAM Top List。',
     );
   }
 
-  const lowDrives = (metrics.disks || []).filter((drive) => drive.ok && (drive.freePercent < 15 || drive.free < 50 * 1024 * 1024 * 1024));
+  const lowDrives = (metrics.disks || []).filter(
+    (drive) => drive.ok && (drive.freePercent < 15 || drive.free < 50 * 1024 * 1024 * 1024),
+  );
   if (lowDrives.length > 0) {
     score -= addDeduction(
       deductions,
       15,
       `磁碟剩餘空間偏低：${lowDrives.map((drive) => `${drive.drive} ${drive.freePercent}%`).join(', ')}`,
       '下載、安裝、編譯與 Windows 更新可能失敗或變慢。',
-      '前往 Clean Center 掃描暫存、大檔與回收桶。'
+      '前往 Clean Center 掃描暫存、大檔與回收桶。',
     );
   }
 
@@ -320,7 +337,7 @@ function computeHealthScore(metrics, extras = {}) {
       10,
       'CPU 連續多次高於 80%',
       '目前可能有背景程式占用運算資源。',
-      '檢查 CPU Top List。'
+      '檢查 CPU Top List。',
     );
   }
 
@@ -332,7 +349,7 @@ function computeHealthScore(metrics, extras = {}) {
       14,
       `CPU 最高溫 ${hotCpu}°C 過高`,
       '可能降頻，長時間高溫也會影響穩定性。',
-      '先暫停重負載工作，確認散熱與風扇。'
+      '先暫停重負載工作，確認散熱與風扇。',
     );
   } else if (hotCpu >= 82) {
     score -= addDeduction(
@@ -340,7 +357,7 @@ function computeHealthScore(metrics, extras = {}) {
       7,
       `CPU 最高溫 ${hotCpu}°C 偏高`,
       '重負載時可能接近降頻區間。',
-      '降低背景負載或改善散熱。'
+      '降低背景負載或改善散熱。',
     );
   }
 
@@ -350,7 +367,7 @@ function computeHealthScore(metrics, extras = {}) {
       12,
       `GPU 溫度 ${hotGpu}°C 過高`,
       '遊戲、影像處理或 AI 工作可能降頻。',
-      '檢查 GPU 負載、風扇與機殼散熱。'
+      '檢查 GPU 負載、風扇與機殼散熱。',
     );
   }
 
@@ -360,7 +377,7 @@ function computeHealthScore(metrics, extras = {}) {
       5,
       `Downloads 有 ${unsortedDownloads} 個待整理項目`,
       '常用檔案會更難找，也可能累積大檔。',
-      '執行檔案整理。'
+      '執行檔案整理。',
     );
   }
 
@@ -370,7 +387,7 @@ function computeHealthScore(metrics, extras = {}) {
       8,
       '有專案存在未提交變更',
       '工作進度可能尚未備份或同步。',
-      '前往 Project Hub 檢查 Git 狀態。'
+      '前往 Project Hub 檢查 Git 狀態。',
     );
   }
 

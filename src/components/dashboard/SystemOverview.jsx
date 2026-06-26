@@ -39,22 +39,34 @@ export default function SystemOverview({ data, onNavigate }) {
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.liveSystem')}</span>
-          <button type="button" onClick={() => onNavigate('monitor')}>{t('dashboard.open')}</button>
+          <button type="button" onClick={() => onNavigate('monitor')}>
+            {t('dashboard.open')}
+          </button>
         </div>
         <div className="health-chip">
           <span>{t('dashboard.systemHealth')}</span>
           <strong>{health?.score ?? '--'}</strong>
         </div>
-        <MetricRow label="CPU" value={metrics?.cpu?.usagePercent} detail={`${metrics?.cpu?.cores || '--'} cores`} />
+        <MetricRow
+          label="CPU"
+          value={metrics?.cpu?.usagePercent}
+          detail={`${metrics?.cpu?.cores || '--'} cores`}
+        />
         <MetricRow
           label={t('dashboard.memory')}
           value={memory?.usagePercent}
-          detail={memory ? `${formatBytes(memory.usedBytes)} / ${formatBytes(memory.totalBytes)}` : ''}
+          detail={
+            memory ? `${formatBytes(memory.usedBytes)} / ${formatBytes(memory.totalBytes)}` : ''
+          }
         />
         <MetricRow
           label={t('dashboard.storage')}
           value={disk?.usedPercent}
-          detail={disk ? `${disk.drive} used ${formatBytes(disk.used)} of ${formatBytes(disk.total)}` : 'No disk data'}
+          detail={
+            disk
+              ? `${disk.drive} used ${formatBytes(disk.used)} of ${formatBytes(disk.total)}`
+              : 'No disk data'
+          }
         />
         <MetricRow label={t('dashboard.network')} unavailable />
       </section>
@@ -62,24 +74,40 @@ export default function SystemOverview({ data, onNavigate }) {
       <section className="glass-card dashboard-panel">
         <div className="panel-heading">
           <span>{t('dashboard.cleanupState')}</span>
-          <button type="button" onClick={() => onNavigate('cleanup')}>{t('dashboard.review')}</button>
+          <button type="button" onClick={() => onNavigate('cleanup')}>
+            {t('dashboard.review')}
+          </button>
         </div>
         <div className="cleanup-state-grid">
           <div>
             <span>{t('dashboard.tempFiles')}</span>
-            <strong>{cleanup?.tempSize != null ? formatBytes(cleanup.tempSize) : t('dashboard.unavailable')}</strong>
+            <strong>
+              {cleanup?.tempSize != null
+                ? formatBytes(cleanup.tempSize)
+                : t('dashboard.unavailable')}
+            </strong>
           </div>
           <div>
             <span>{t('dashboard.recycleBin')}</span>
-            <strong>{cleanup?.recycleBin?.size != null ? formatBytes(cleanup.recycleBin.size) : t('dashboard.unavailable')}</strong>
+            <strong>
+              {cleanup?.recycleBin?.size != null
+                ? formatBytes(cleanup.recycleBin.size)
+                : t('dashboard.unavailable')}
+            </strong>
           </div>
           <div>
             <span>{t('dashboard.lastCleanup')}</span>
-            <strong>{cleanup?.lastCleanupTime ? new Date(cleanup.lastCleanupTime).toLocaleDateString() : t('dashboard.none')}</strong>
+            <strong>
+              {cleanup?.lastCleanupTime
+                ? new Date(cleanup.lastCleanupTime).toLocaleDateString()
+                : t('dashboard.none')}
+            </strong>
           </div>
           <div>
             <span>{t('dashboard.recommendations')}</span>
-            <strong>{cleanup?.hasRecommendations ? t('dashboard.action') : t('dashboard.clear')}</strong>
+            <strong>
+              {cleanup?.hasRecommendations ? t('dashboard.action') : t('dashboard.clear')}
+            </strong>
           </div>
         </div>
       </section>

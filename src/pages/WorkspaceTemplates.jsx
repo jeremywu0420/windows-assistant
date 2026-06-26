@@ -31,35 +31,123 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const TEMPLATES = [
-  { id: 'custom-combo', name: 'Custom Combo', desc: '自由勾選多種語言，建立混合工作區。', modules: [] },
-  { id: 'react-vite', name: 'React / Vite', desc: 'React frontend app with Vite.', modules: ['JavaScript', 'React'] },
-  { id: 'electron', name: 'Electron App', desc: 'Windows desktop utility or local app.', modules: ['JavaScript', 'Electron'] },
-  { id: 'python', name: 'Python', desc: 'Python script, automation, or data workspace.', modules: ['Python'] },
-  { id: 'javascript', name: 'JavaScript', desc: 'Node.js JavaScript workspace.', modules: ['JavaScript'] },
-  { id: 'typescript', name: 'TypeScript', desc: 'TypeScript starter workspace.', modules: ['TypeScript'] },
+  {
+    id: 'custom-combo',
+    name: 'Custom Combo',
+    desc: '自由勾選多種語言，建立混合工作區。',
+    modules: [],
+  },
+  {
+    id: 'react-vite',
+    name: 'React / Vite',
+    desc: 'React frontend app with Vite.',
+    modules: ['JavaScript', 'React'],
+  },
+  {
+    id: 'electron',
+    name: 'Electron App',
+    desc: 'Windows desktop utility or local app.',
+    modules: ['JavaScript', 'Electron'],
+  },
+  {
+    id: 'python',
+    name: 'Python',
+    desc: 'Python script, automation, or data workspace.',
+    modules: ['Python'],
+  },
+  {
+    id: 'javascript',
+    name: 'JavaScript',
+    desc: 'Node.js JavaScript workspace.',
+    modules: ['JavaScript'],
+  },
+  {
+    id: 'typescript',
+    name: 'TypeScript',
+    desc: 'TypeScript starter workspace.',
+    modules: ['TypeScript'],
+  },
   { id: 'java', name: 'Java', desc: 'Java starter workspace.', modules: ['Java'] },
   { id: 'csharp', name: 'C#', desc: 'C# starter workspace.', modules: ['C#'] },
   { id: 'cpp', name: 'C / C++', desc: 'C++ starter workspace with CMake.', modules: ['C++'] },
   { id: 'go', name: 'Go', desc: 'Go module workspace.', modules: ['Go'] },
   { id: 'rust', name: 'Rust', desc: 'Rust Cargo workspace.', modules: ['Rust'] },
-  { id: 'web', name: 'HTML / CSS / JS', desc: 'Static web workspace.', modules: ['HTML', 'CSS', 'JavaScript'] },
-  { id: 'data-stack', name: 'Python + SQL', desc: 'Data scripting workspace.', modules: ['Python', 'SQL'] },
-  { id: 'fullstack-js', name: 'TypeScript + Web', desc: 'TypeScript and web starter workspace.', modules: ['TypeScript', 'HTML/CSS'] },
-  { id: 'hardware', name: 'C++ + Verilog', desc: 'Hardware / firmware starter workspace.', modules: ['C++', 'Verilog'] },
-  { id: 'arduino', name: 'Arduino / 微控制器', desc: 'Arduino / 微控制器 sketch 工作區。', modules: ['Arduino'] },
-  { id: 'fpga-verilog', name: 'FPGA / Verilog', desc: 'Verilog RTL + testbench（Quartus / Vivado）。', modules: ['Verilog'] },
-  { id: 'fpga-vhdl', name: 'FPGA / VHDL', desc: 'VHDL RTL 工作區（Quartus / Vivado）。', modules: ['VHDL'] },
-  { id: 'matlab', name: 'MATLAB / 訊號處理', desc: 'MATLAB / Octave 腳本工作區。', modules: ['MATLAB'] },
-  { id: 'embedded-c', name: 'STM32 / 嵌入式 C', desc: 'Bare-metal 嵌入式 C 工作區。', modules: ['C'] },
-  { id: 'kicad', name: 'KiCad PCB 專案', desc: 'KiCad PCB 專案骨架（資料夾 + 說明）。', modules: [] },
+  {
+    id: 'web',
+    name: 'HTML / CSS / JS',
+    desc: 'Static web workspace.',
+    modules: ['HTML', 'CSS', 'JavaScript'],
+  },
+  {
+    id: 'data-stack',
+    name: 'Python + SQL',
+    desc: 'Data scripting workspace.',
+    modules: ['Python', 'SQL'],
+  },
+  {
+    id: 'fullstack-js',
+    name: 'TypeScript + Web',
+    desc: 'TypeScript and web starter workspace.',
+    modules: ['TypeScript', 'HTML/CSS'],
+  },
+  {
+    id: 'hardware',
+    name: 'C++ + Verilog',
+    desc: 'Hardware / firmware starter workspace.',
+    modules: ['C++', 'Verilog'],
+  },
+  {
+    id: 'arduino',
+    name: 'Arduino / 微控制器',
+    desc: 'Arduino / 微控制器 sketch 工作區。',
+    modules: ['Arduino'],
+  },
+  {
+    id: 'fpga-verilog',
+    name: 'FPGA / Verilog',
+    desc: 'Verilog RTL + testbench（Quartus / Vivado）。',
+    modules: ['Verilog'],
+  },
+  {
+    id: 'fpga-vhdl',
+    name: 'FPGA / VHDL',
+    desc: 'VHDL RTL 工作區（Quartus / Vivado）。',
+    modules: ['VHDL'],
+  },
+  {
+    id: 'matlab',
+    name: 'MATLAB / 訊號處理',
+    desc: 'MATLAB / Octave 腳本工作區。',
+    modules: ['MATLAB'],
+  },
+  {
+    id: 'embedded-c',
+    name: 'STM32 / 嵌入式 C',
+    desc: 'Bare-metal 嵌入式 C 工作區。',
+    modules: ['C'],
+  },
+  {
+    id: 'kicad',
+    name: 'KiCad PCB 專案',
+    desc: 'KiCad PCB 專案骨架（資料夾 + 說明）。',
+    modules: [],
+  },
   { id: 'documents', name: 'Documents', desc: 'Reports, notes, assets, and exports.', modules: [] },
-  { id: 'custom-folder', name: 'Custom Folder', desc: 'A clean folder for manual expansion.', modules: [] },
+  {
+    id: 'custom-folder',
+    name: 'Custom Folder',
+    desc: 'A clean folder for manual expansion.',
+    modules: [],
+  },
 ];
 
 function withTimeout(promise, ms = 12000) {
   let timer;
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error('建立逾時，請確認資料夾權限或同步工具是否鎖住。')), ms);
+    timer = setTimeout(
+      () => reject(new Error('建立逾時，請確認資料夾權限或同步工具是否鎖住。')),
+      ms,
+    );
   });
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
@@ -97,7 +185,8 @@ export default function WorkspaceTemplates({ onNavigate }) {
 
   useEffect(() => {
     if (!window.api) return;
-    window.api.getProjectHubSettings()
+    window.api
+      .getProjectHubSettings()
       .then((result) => {
         if (result.ok) {
           setHub(result.projectHub);
@@ -109,12 +198,12 @@ export default function WorkspaceTemplates({ onNavigate }) {
 
   const selectedTemplate = useMemo(
     () => TEMPLATES.find((template) => template.id === templateId) || TEMPLATES[0],
-    [templateId]
+    [templateId],
   );
 
-  const selectedLanguageNames = LANGUAGE_OPTIONS
-    .filter((language) => languageIds.includes(language.id))
-    .map((language) => language.name);
+  const selectedLanguageNames = LANGUAGE_OPTIONS.filter((language) =>
+    languageIds.includes(language.id),
+  ).map((language) => language.name);
 
   const pickBase = async () => {
     const result = await window.api.pickPath({ type: 'folder', title: '選擇工作區建立位置' });
@@ -134,14 +223,16 @@ export default function WorkspaceTemplates({ onNavigate }) {
     setCreated(null);
     setError('');
     try {
-      const result = await withTimeout(window.api.createProjectFromTemplate({
-        templateId,
-        languageIds: templateId === 'custom-combo' ? languageIds : undefined,
-        name,
-        baseDir,
-        addToMode,
-        githubUrl: 'https://github.com/',
-      }));
+      const result = await withTimeout(
+        window.api.createProjectFromTemplate({
+          templateId,
+          languageIds: templateId === 'custom-combo' ? languageIds : undefined,
+          name,
+          baseDir,
+          addToMode,
+          githubUrl: 'https://github.com/',
+        }),
+      );
       if (!result.ok) {
         setError(result.error || '建立工作區失敗');
         toast(result.error || '建立工作區失敗', 'error');
@@ -163,7 +254,11 @@ export default function WorkspaceTemplates({ onNavigate }) {
         eyebrow="WORKSPACE"
         title="Workspace Templates"
         description="選擇單一語言模板，或用 Custom Combo 自由組合多種語言。工作模式預設開 VS Code、資料夾與 GitHub。"
-        actions={<Button variant="ghost" onClick={() => onNavigate && onNavigate('projects')}>前往 Project Hub</Button>}
+        actions={
+          <Button variant="ghost" onClick={() => onNavigate && onNavigate('projects')}>
+            前往 Project Hub
+          </Button>
+        }
       />
 
       <div className="template-grid wide-template-grid">
@@ -184,20 +279,32 @@ export default function WorkspaceTemplates({ onNavigate }) {
             </div>
             <p>{template.desc}</p>
             <div className="chip-row">
-              {(template.id === 'custom-combo' ? selectedLanguageNames : template.modules).slice(0, 4).map((item) => (
-                <span className="mini-chip" key={item}>{item}</span>
-              ))}
-              {template.id === 'custom-combo' && selectedLanguageNames.length === 0 ? <span className="muted">請選擇語言</span> : null}
+              {(template.id === 'custom-combo' ? selectedLanguageNames : template.modules)
+                .slice(0, 4)
+                .map((item) => (
+                  <span className="mini-chip" key={item}>
+                    {item}
+                  </span>
+                ))}
+              {template.id === 'custom-combo' && selectedLanguageNames.length === 0 ? (
+                <span className="muted">請選擇語言</span>
+              ) : null}
             </div>
           </button>
         ))}
       </div>
 
       {templateId === 'custom-combo' ? (
-        <SectionPanel title="自訂語言組合" description="勾選要放進同一個工作區的語言。每種語言會建立自己的子資料夾，避免檔案互相覆蓋。">
+        <SectionPanel
+          title="自訂語言組合"
+          description="勾選要放進同一個工作區的語言。每種語言會建立自己的子資料夾，避免檔案互相覆蓋。"
+        >
           <div className="language-grid">
             {LANGUAGE_OPTIONS.map((language) => (
-              <label className={`language-chip ${languageIds.includes(language.id) ? 'active' : ''}`} key={language.id}>
+              <label
+                className={`language-chip ${languageIds.includes(language.id) ? 'active' : ''}`}
+                key={language.id}
+              >
                 <input
                   type="checkbox"
                   checked={languageIds.includes(language.id)}
@@ -210,7 +317,10 @@ export default function WorkspaceTemplates({ onNavigate }) {
         </SectionPanel>
       ) : null}
 
-      <SectionPanel title="建立設定" description="建立流程只會寫入模板檔案；同名資料夾已存在時會停止，不會覆蓋。">
+      <SectionPanel
+        title="建立設定"
+        description="建立流程只會寫入模板檔案；同名資料夾已存在時會停止，不會覆蓋。"
+      >
         <PathPickerRow
           label="建立位置"
           description="建議選 Project Hub 的掃描根目錄。"
@@ -221,10 +331,18 @@ export default function WorkspaceTemplates({ onNavigate }) {
         <div className="form-grid">
           <label>
             <span>工作區名稱</span>
-            <input className="path-input" value={name} onChange={(event) => setName(event.target.value)} />
+            <input
+              className="path-input"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
           </label>
           <label className="toggle-row">
-            <input type="checkbox" checked={addToMode} onChange={(event) => setAddToMode(event.target.checked)} />
+            <input
+              type="checkbox"
+              checked={addToMode}
+              onChange={(event) => setAddToMode(event.target.checked)}
+            />
             <span>建立後加入工作模式：VS Code + 資料夾 + GitHub</span>
           </label>
         </div>
@@ -235,11 +353,16 @@ export default function WorkspaceTemplates({ onNavigate }) {
         </div>
       </SectionPanel>
 
-      {error ? <InlineAlert tone="danger" title="建立失敗">{error}</InlineAlert> : null}
+      {error ? (
+        <InlineAlert tone="danger" title="建立失敗">
+          {error}
+        </InlineAlert>
+      ) : null}
 
       {created ? (
         <InlineAlert tone="ok" title="建立完成">
-          {created.project.name} 已建立於 {created.project.path}。語言：{(created.languages || []).join(', ') || selectedTemplate.name}。
+          {created.project.name} 已建立於 {created.project.path}。語言：
+          {(created.languages || []).join(', ') || selectedTemplate.name}。
         </InlineAlert>
       ) : null}
 
