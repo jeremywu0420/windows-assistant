@@ -133,7 +133,6 @@ async function runWorkflow(workflow, event = { kind: 'manual' }, config = {}, op
         if (dryRun) {
           steps.push({ nodeId: node.id, type: node.type, destructive, dryRun: true, ok: true });
         } else {
-          // eslint-disable-next-line no-await-in-loop
           const result = await automationService.runAction(nodeAction(node), info, config);
           steps.push({ nodeId: node.id, type: node.type, destructive, ...result });
         }
@@ -141,7 +140,6 @@ async function runWorkflow(workflow, event = { kind: 'manual' }, config = {}, op
     }
 
     for (const next of adj.get(nodeId) || []) {
-      // eslint-disable-next-line no-await-in-loop
       await walk(next, visited);
     }
   }
@@ -152,7 +150,6 @@ async function runWorkflow(workflow, event = { kind: 'manual' }, config = {}, op
     if (!triggerFires(node, event)) continue;
     triggered = true;
     for (const next of adj.get(node.id) || []) {
-      // eslint-disable-next-line no-await-in-loop
       await walk(next, new Set());
     }
   }

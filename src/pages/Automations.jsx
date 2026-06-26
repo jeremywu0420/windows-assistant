@@ -77,7 +77,7 @@ function summarizeRun(result) {
   return result.message || '完成，沒有需要整理的檔案';
 }
 
-export default function Automations() {
+export default function Automations({ onNavigate }) {
   const { toast } = useToast();
   const [rules, setRules] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -202,6 +202,7 @@ export default function Automations() {
         actions={
           <>
             <StatusBadge tone="ok">{enabledCount} 個啟用</StatusBadge>
+            <Button onClick={() => onNavigate && onNavigate('workflows')}>視覺化編輯 ✦</Button>
             <Button variant="primary" onClick={addRule}>
               新增規則
             </Button>

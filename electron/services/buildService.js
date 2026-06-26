@@ -156,7 +156,6 @@ async function runBuild(folderPath, onData) {
   }
   onData({ stream: 'system', text: `偵測到：${plan.label}` });
   for (const step of plan.steps) {
-    // eslint-disable-next-line no-await-in-loop
     const r = await runStep(step, onData);
     if (!r.ok) {
       onData({ stream: 'system', text: `✗ 失敗（exit ${r.code}）` });

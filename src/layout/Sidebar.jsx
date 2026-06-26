@@ -13,6 +13,7 @@ export const NAV_SECTIONS = [
       { key: 'monitor', label: 'nav.monitor', icon: 'pulse' },
       { key: 'security', label: '安全性中心', icon: 'securityCenter' },
       { key: 'automations', label: 'nav.automations', icon: 'bolt' },
+      { key: 'workflows', label: 'nav.workflows', icon: 'nodes' },
       { key: 'settings', label: 'nav.settings', icon: 'gear' },
     ],
   },

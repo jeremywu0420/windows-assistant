@@ -354,7 +354,6 @@ async function handleNewFile(config, info) {
       }
     }
     if (matches(cond, info)) {
-      // eslint-disable-next-line no-await-in-loop
       const result = await runAction(rule.action || {}, info, config);
       fired.push({ rule: rule.name, ...result });
     }
@@ -444,6 +443,20 @@ function stopScheduler() {
   scheduleTimer = null;
 }
 
+/**
+ * Whether a schedule defined by `condition` ({ scheduleMode, everyMinutes, time,
+ * dayOfWeek }) is due for the given dedupe `key`. Lets the workflow scheduler
+ * reuse the exact same timing + once-per-window dedupe as flat automations.
+ */
+function scheduleDueFor(key, condition, now = new Date()) {
+  return scheduleDue({ id: key, condition: { type: 'schedule', ...(condition || {}) } }, now);
+}
+
+/** Record that the schedule for `key` just fired (resets its dedupe window). */
+function markScheduleFired(key) {
+  scheduledState.set(key, Date.now());
+}
+
 module.exports = {
   list,
   matches,
@@ -453,4 +466,6 @@ module.exports = {
   handleSchedules,
   startScheduler,
   stopScheduler,
+  scheduleDueFor,
+  markScheduleFired,
 };

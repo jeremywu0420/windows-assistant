@@ -9,6 +9,7 @@ import Projects from './pages/Projects.jsx';
 import Modes from './pages/Modes.jsx';
 import FileOrganizer from './pages/FileOrganizer.jsx';
 import Automations from './pages/Automations.jsx';
+import WorkflowEditor from './pages/WorkflowEditor.tsx';
 import SystemMonitor from './pages/SystemMonitor.jsx';
 import Screenshots from './pages/Screenshots.jsx';
 import Rules from './pages/Rules.jsx';
@@ -104,7 +105,9 @@ function Shell() {
       case 'embedded':
         return <EmbeddedLab />;
       case 'automations':
-        return <Automations />;
+        return <Automations onNavigate={navigate} />;
+      case 'workflows':
+        return <WorkflowEditor onNavigate={navigate} />;
       case 'monitor':
         return <SystemMonitor onNavigate={navigate} />;
       case 'screenshots':

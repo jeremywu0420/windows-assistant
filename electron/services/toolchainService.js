@@ -208,7 +208,6 @@ async function checkAll() {
   const results = [];
   // Run sequentially to avoid spawning a burst of processes at once.
   for (const tool of TOOLS) {
-    // eslint-disable-next-line no-await-in-loop
     results.push(await checkTool(tool));
   }
 

@@ -153,7 +153,6 @@ async function onNewFile(info) {
       const event = { kind: 'file', info };
       for (const wf of workflowService.listWorkflows(config)) {
         if (!wf || wf.enabled === false) continue;
-        // eslint-disable-next-line no-await-in-loop
         const result = await workflowService.runWorkflow(wf, event, config);
         if (result.ok && (result.steps || []).length) {
           writeLog('info', `workflow "${wf.name}" fired for ${info.file}`);
@@ -180,13 +179,24 @@ function startMonitoring() {
 }
 
 let workflowScheduleTimer = null;
+// Find an enabled workflow's schedule trigger that is currently due (reusing the
+// flat-automation timing + dedupe), so scheduled workflows don't fire every tick.
+function dueScheduleTrigger(workflow) {
+  return (workflow.nodes || []).find((node) => {
+    if (!node || node.kind !== 'trigger' || node.type !== 'schedule') return false;
+    return automationService.scheduleDueFor(`${workflow.id}:${node.id}`, node.config || {});
+  });
+}
+
 async function runScheduledWorkflows() {
   const config = loadConfig();
   if (config.general && config.general.automationsEnabled === false) return;
   const event = { kind: 'schedule', info: { file: '', path: '', folder: '', ext: '', size: 0 } };
   for (const wf of workflowService.listWorkflows(config)) {
     if (!wf || wf.enabled === false) continue;
-    // eslint-disable-next-line no-await-in-loop
+    const dueNode = dueScheduleTrigger(wf);
+    if (!dueNode) continue;
+    automationService.markScheduleFired(`${wf.id}:${dueNode.id}`);
     const result = await workflowService.runWorkflow(wf, event, config);
     if (result.ok && (result.steps || []).length) {
       writeLog('info', `scheduled workflow "${wf.name}" fired`);

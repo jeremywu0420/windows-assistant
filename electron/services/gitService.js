@@ -118,7 +118,6 @@ async function checkAll(projects) {
   const results = [];
   for (const project of projects) {
     // Sequential keeps it simple and avoids spawning too many git processes at once.
-    // eslint-disable-next-line no-await-in-loop
     results.push(await checkProject(project));
   }
   const hasStaleProject = results.some(
