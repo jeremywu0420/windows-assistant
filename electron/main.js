@@ -41,6 +41,7 @@ const serialService = require('./services/serialService');
 const dashboardService = require('./services/dashboardService');
 const overlayMetricsService = require('./services/overlayMetricsService');
 const securityService = require('./services/securityService');
+const { logger } = require('./services/loggerService');
 
 const isDev = !app.isPackaged;
 
@@ -55,19 +56,25 @@ if (isDev) {
 // In-memory record of the last organize batch (for undo).
 let lastOrganizeBatch = null;
 
-// --- Minimal file logger (errors are appended to <userData>/logs/app.log) ---
+// --- Structured logger (JSON lines at <userData>/logs/app.log) ---
+// writeLog keeps its old (level, message) signature so existing call sites are
+// untouched; it now routes through loggerService, which also keeps an in-memory
+// ring buffer for the diagnostics IPC below. Logging is local-only and can be
+// turned off via general.diagnostics === false.
 function logsDir() {
   return path.join(app.getPath('userData'), 'logs');
 }
-function writeLog(level, message) {
+function diagnosticsEnabled() {
   try {
-    const dir = logsDir();
-    fs.mkdirSync(dir, { recursive: true });
-    const line = `[${new Date().toISOString()}] [${level}] ${message}\n`;
-    fs.appendFileSync(path.join(dir, 'app.log'), line, 'utf-8');
+    return loadConfig().general?.diagnostics !== false;
   } catch (_) {
-    /* never let logging crash the app */
+    return true;
   }
+}
+function writeLog(level, message) {
+  if (!diagnosticsEnabled()) return;
+  const fn = logger[level] || logger.info;
+  fn(message);
 }
 
 // Catch otherwise-unhandled errors so they are logged instead of silently crashing the app.
