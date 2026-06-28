@@ -55,6 +55,7 @@ The goal is not to be another todo list — it's to **remove the small repeated 
 | **EE Quick Tools**       | Built-in calculators for electrical engineering: Ohm's law, voltage divider, bidirectional resistor colour-code (colours ⇄ value), RC/RL/LC, series/parallel, and base conversion — all engineering-notation aware.                                                                            |
 | **Embedded Lab**         | Detects and compiles/simulates Arduino, Verilog, VHDL, Octave, and CMake projects with streamed build output, one-click flash to an Arduino board (with confirmation), plus a read-only serial monitor (COM port list + live data).                                                            |
 | **Automations**          | Safe scheduled reminders and helper actions for cleanup, screenshots, and project rescans.                                                                                                                                                                                                     |
+| **Visual Automation**    | A node-based editor (trigger → condition → action) for building automation workflows on a drag-and-drop canvas. Reuses the same safe, review-first actions; file-mutating steps are flagged and confirmed, and a dry-run previews exactly what a workflow would do before it runs.             |
 | **Command Palette**      | Global quick actions (Ctrl+Shift+P / Ctrl+K) for navigation, project actions, health checks, and cleanup.                                                                                                                                                                                      |
 | **Security Center**      | Read-only overview of Windows Security — Microsoft Defender, Firewall, account protection, app & browser control, device security (TPM / Secure Boot / BitLocker / Memory Integrity), and protection history — with one-click Quick Scan, signature update, and shortcuts to Windows settings. |
 | **System Overlay**       | Optional always-on-top performance HUD (RTSS / Afterburner style) showing FPS and 1% low, CPU usage / power / temperature / clock, GPU usage / temperature / VRAM, and RAM — toggleable from the tray, with click-through.                                                                     |
@@ -239,6 +240,19 @@ npm run package:dir
 | `npm run package`        | Builds and packages the Windows installer.            |
 | `npm run package:dir`    | Builds an unpacked Windows app directory.             |
 | `npm run release:github` | Builds and publishes a GitHub release.                |
+| `npm run lint`           | Runs ESLint.                                          |
+| `npm run typecheck`      | Type-checks with `tsc --noEmit`.                      |
+| `npm run test`           | Runs the Vitest unit suite.                           |
+| `npm run format`         | Formats the codebase with Prettier.                   |
+
+### Quality & contributing
+
+The project ships with ESLint + Prettier, a Vitest unit suite, strict
+TypeScript checking, and a GitHub Actions CI pipeline (lint → typecheck → test →
+build on Node 20 & 22). See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for how the
+main process, preload bridge, and renderer fit together, and
+**[CONTRIBUTING.md](./CONTRIBUTING.md)** for setup, the quality gates, and the
+patterns for adding a backend capability or a workflow node type.
 
 ---
 
