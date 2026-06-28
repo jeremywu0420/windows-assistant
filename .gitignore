@@ -17,6 +17,11 @@ win-unpacked/
 # Test coverage
 coverage/
 
+# Playwright
+test-results/
+playwright-report/
+.playwright/
+
 # Generated icons (regenerated via `npm run gen:icons`)
 build/icon.png
 electron/assets/tray-icon.png
